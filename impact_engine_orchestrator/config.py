@@ -22,6 +22,13 @@ class PipelineConfig:
     initiatives: list[InitiativeConfig]
     max_workers: int = 4
 
+    def __post_init__(self):
+        """Validate configuration invariants."""
+        assert self.budget > 0, f"budget must be positive, got {self.budget}"
+        assert self.scale_sample_size > 0, f"scale_sample_size must be positive, got {self.scale_sample_size}"
+        assert len(self.initiatives) > 0, "initiatives must not be empty"
+        assert self.max_workers > 0, f"max_workers must be positive, got {self.max_workers}"
+
 
 def load_config(path: str) -> PipelineConfig:
     """Load a PipelineConfig from a YAML file."""

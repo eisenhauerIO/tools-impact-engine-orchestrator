@@ -3,6 +3,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 
+from impact_engine_orchestrator.components.base import PipelineComponent
 from impact_engine_orchestrator.config import PipelineConfig
 from impact_engine_orchestrator.contracts.report import OutcomeReport
 
@@ -10,7 +11,13 @@ from impact_engine_orchestrator.contracts.report import OutcomeReport
 class Orchestrator:
     """Run the full MEASURE-EVALUATE-ALLOCATE-SCALE pipeline."""
 
-    def __init__(self, measure, evaluate, allocate, config: PipelineConfig):
+    def __init__(
+        self,
+        measure: PipelineComponent,
+        evaluate: PipelineComponent,
+        allocate: PipelineComponent,
+        config: PipelineConfig,
+    ):
         self.measure = measure
         self.evaluate = evaluate
         self.allocate = allocate

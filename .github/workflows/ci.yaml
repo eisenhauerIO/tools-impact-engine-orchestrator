@@ -28,4 +28,4 @@ jobs:
           hatch run ruff format --check .
 
       - name: Run tests and notebooks
-        run: hatch run pytest tests/ --nbmake notebooks/ -v
+        run: hatch run pytest

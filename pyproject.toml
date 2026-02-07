@@ -33,4 +33,5 @@ convention = "numpy"
 "scripts/**" = ["D"]
 
 [tool.pytest.ini_options]
-addopts = "-v"
+addopts = "-v --nbmake"
+testpaths = ["tests", "notebooks"]

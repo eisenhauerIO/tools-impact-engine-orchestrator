@@ -1,5 +1,6 @@
 """Mock MEASURE component with deterministic hash-seeded results."""
 
+import hashlib
 import random
 from dataclasses import asdict
 
@@ -8,13 +9,18 @@ from impact_engine_orchestrator.contracts.measure import MeasureResult
 from impact_engine_orchestrator.contracts.types import ModelType
 
 
+def _stable_seed(s: str) -> int:
+    """Return a deterministic 32-bit seed from a string, stable across processes."""
+    return int(hashlib.md5(s.encode()).hexdigest(), 16) % 2**32
+
+
 class MockMeasure(PipelineComponent):
     """Deterministic fake causal effect estimator seeded by initiative_id."""
 
-    def execute(self, event: dict, context=None) -> dict:
+    def execute(self, event: dict) -> dict:
         """Return a validated MeasureResult dict."""
         initiative_id = event["initiative_id"]
-        seed = hash(initiative_id) % 2**32
+        seed = _stable_seed(initiative_id)
         rng = random.Random(seed)
 
         effect = rng.uniform(0.05, 0.25)

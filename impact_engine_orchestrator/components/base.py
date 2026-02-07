@@ -7,6 +7,5 @@ class PipelineComponent(ABC):
     """Single-initiative processor conforming to the handler interface."""
 
     @abstractmethod
-    def execute(self, event: dict, context=None) -> dict:
+    def execute(self, event: dict) -> dict:
         """Process single initiative, return result."""
-        pass

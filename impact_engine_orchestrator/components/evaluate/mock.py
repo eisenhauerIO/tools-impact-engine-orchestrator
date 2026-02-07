@@ -1,5 +1,6 @@
 """Mock EVALUATE component with confidence scoring by model type."""
 
+import hashlib
 import random
 from dataclasses import asdict
 
@@ -15,14 +16,19 @@ CONFIDENCE_MAP = {
 }
 
 
+def _stable_seed(s: str) -> int:
+    """Return a deterministic 32-bit seed from a string, stable across processes."""
+    return int(hashlib.md5(s.encode()).hexdigest(), 16) % 2**32
+
+
 class MockEvaluate(PipelineComponent):
     """Deterministic confidence scorer based on model type."""
 
-    def execute(self, event: dict, context=None) -> dict:
+    def execute(self, event: dict) -> dict:
         """Return a validated EvaluateResult dict."""
         model_type = event["model_type"]
         conf_range = CONFIDENCE_MAP[model_type]
-        seed = hash(event["initiative_id"]) % 2**32
+        seed = _stable_seed(event["initiative_id"])
         rng = random.Random(seed)
         confidence = rng.uniform(conf_range[0], conf_range[1])
 

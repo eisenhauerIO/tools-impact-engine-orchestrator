@@ -9,7 +9,7 @@ from impact_engine_orchestrator.contracts.allocate import AllocateResult
 class MockAllocate(PipelineComponent):
     """Select top initiatives by confidence * return_median until budget exhausted."""
 
-    def execute(self, event: dict, context=None) -> dict:
+    def execute(self, event: dict) -> dict:
         """Return a validated AllocateResult dict."""
         initiatives = event["initiatives"]
         budget = event["budget"]
