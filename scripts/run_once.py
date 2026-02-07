@@ -6,24 +6,11 @@ Usage:
 
 import argparse
 
-import yaml
-
 from impact_engine_orchestrator.components.allocate.mock import MockAllocate
 from impact_engine_orchestrator.components.evaluate.mock import MockEvaluate
 from impact_engine_orchestrator.components.measure.mock import MockMeasure
-from impact_engine_orchestrator.config import InitiativeConfig, PipelineConfig
+from impact_engine_orchestrator.config import load_config
 from impact_engine_orchestrator.orchestrator import Orchestrator
-
-
-def load_config(path: str) -> PipelineConfig:
-    with open(path) as f:
-        raw = yaml.safe_load(f)
-    return PipelineConfig(
-        budget=raw["budget"],
-        scale_sample_size=raw.get("scale_sample_size", 5000),
-        max_workers=4,
-        initiatives=[InitiativeConfig(**i) for i in raw["initiatives"]],
-    )
 
 
 def print_reports(result):
@@ -37,7 +24,7 @@ def print_reports(result):
         print(f"  Predicted: {report['predicted_return']:.2%}")
         print(f"  Actual:    {report['actual_return']:.2%}")
         print(f"  Error:     {report['prediction_error']:+.2%}")
-        print(f"  Confidence: {report['confidence_score']:.2f} ({report['model_type']})")
+        print(f"  Confidence: {report['confidence_score']:.2f} ({report['model_type'].value})")
         print(f"  Budget:    ${report['budget_allocated']:,.0f}")
         print(f"  Samples:   {report['sample_size_pilot']} → {report['sample_size_scale']}")
 

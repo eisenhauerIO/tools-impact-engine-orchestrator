@@ -1,8 +1,10 @@
 """Fan-out/fan-in pipeline runner."""
 
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict
 
 from impact_engine_orchestrator.config import PipelineConfig
+from impact_engine_orchestrator.contracts.report import OutcomeReport
 
 
 class Orchestrator:
@@ -55,15 +57,22 @@ class Orchestrator:
         }
 
     def _fan_out(self, component, inputs, pool):
+        """Submit inputs to the pool and collect results in submission order.
+
+        If any component raises, the exception propagates immediately but
+        already-submitted futures continue running until the pool's context
+        manager shuts them down.
+        """
         futures = [pool.submit(component.execute, inp) for inp in inputs]
         return [f.result() for f in futures]
 
     def _generate_reports(self, pilot_results, eval_results, alloc_result, scale_results):
-        reports = []
+        """Build outcome reports comparing pilot predictions to scale actuals."""
         pilot_by_id = {p["initiative_id"]: p for p in pilot_results}
         eval_by_id = {e["initiative_id"]: e for e in eval_results}
         scale_by_id = {s["initiative_id"]: s for s in scale_results}
 
+        reports = []
         for iid in alloc_result["selected_initiatives"]:
             pilot = pilot_by_id[iid]
             evalu = eval_by_id[iid]
@@ -71,17 +80,16 @@ class Orchestrator:
             predicted = alloc_result["predicted_returns"][iid]
             actual = scale["effect_estimate"]
 
-            reports.append(
-                {
-                    "initiative_id": iid,
-                    "predicted_return": predicted,
-                    "actual_return": actual,
-                    "prediction_error": actual - predicted,
-                    "sample_size_pilot": pilot["sample_size"],
-                    "sample_size_scale": scale["sample_size"],
-                    "budget_allocated": alloc_result["budget_allocated"][iid],
-                    "confidence_score": evalu["confidence"],
-                    "model_type": evalu["model_type"],
-                }
+            report = OutcomeReport(
+                initiative_id=iid,
+                predicted_return=predicted,
+                actual_return=actual,
+                prediction_error=actual - predicted,
+                sample_size_pilot=pilot["sample_size"],
+                sample_size_scale=scale["sample_size"],
+                budget_allocated=alloc_result["budget_allocated"][iid],
+                confidence_score=evalu["confidence"],
+                model_type=evalu["model_type"],
             )
+            reports.append(asdict(report))
         return reports

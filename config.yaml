@@ -1,5 +1,6 @@
 budget: 100000
 scale_sample_size: 5000
+max_workers: 4
 
 initiatives:
   - initiative_id: product-desc-enhancement

@@ -1,15 +1,18 @@
 """Mock MEASURE component with deterministic hash-seeded results."""
 
 import random
+from dataclasses import asdict
 
 from impact_engine_orchestrator.components.base import PipelineComponent
+from impact_engine_orchestrator.contracts.measure import MeasureResult
+from impact_engine_orchestrator.contracts.types import ModelType
 
 
 class MockMeasure(PipelineComponent):
     """Deterministic fake causal effect estimator seeded by initiative_id."""
 
     def execute(self, event: dict, context=None) -> dict:
-        """Return a synthetic MeasureResult dict."""
+        """Return a validated MeasureResult dict."""
         initiative_id = event["initiative_id"]
         seed = hash(initiative_id) % 2**32
         rng = random.Random(seed)
@@ -24,13 +27,14 @@ class MockMeasure(PipelineComponent):
         noise = noise_rng.gauss(0, 0.01)
         effect += noise
 
-        return {
-            "initiative_id": initiative_id,
-            "effect_estimate": effect,
-            "ci_lower": effect - ci_width / 2,
-            "ci_upper": effect + ci_width / 2,
-            "p_value": rng.uniform(0.001, 0.05),
-            "sample_size": sample_size,
-            "model_type": rng.choice(["experiment", "quasi-experiment", "time-series", "observational"]),
-            "diagnostics": {"r_squared": rng.uniform(0.6, 0.95)},
-        }
+        result = MeasureResult(
+            initiative_id=initiative_id,
+            effect_estimate=effect,
+            ci_lower=effect - ci_width / 2,
+            ci_upper=effect + ci_width / 2,
+            p_value=rng.uniform(0.001, 0.05),
+            sample_size=sample_size,
+            model_type=ModelType(rng.choice(["experiment", "quasi-experiment", "time-series", "observational"])),
+            diagnostics={"r_squared": rng.uniform(0.6, 0.95)},
+        )
+        return asdict(result)

@@ -12,8 +12,8 @@ class EvaluateResult:
     initiative_id: str
     confidence: float
     cost: float
-    R_best: float
-    R_med: float
-    R_worst: float
+    return_best: float
+    return_median: float
+    return_worst: float
     model_type: ModelType
     sample_size: int

@@ -4,6 +4,7 @@ from impact_engine_orchestrator.components.allocate.mock import MockAllocate
 from impact_engine_orchestrator.components.evaluate.mock import MockEvaluate
 from impact_engine_orchestrator.components.measure.mock import MockMeasure
 from impact_engine_orchestrator.config import InitiativeConfig, PipelineConfig
+from impact_engine_orchestrator.contracts.types import ModelType
 from impact_engine_orchestrator.orchestrator import Orchestrator
 
 
@@ -17,7 +18,6 @@ def _make_orchestrator(budget=100000, initiatives=None):
     config = PipelineConfig(
         budget=budget,
         scale_sample_size=5000,
-        max_workers=4,
         initiatives=initiatives,
     )
     return Orchestrator(
@@ -47,11 +47,13 @@ def test_contract_invariants():
         assert pilot["ci_lower"] <= pilot["effect_estimate"] <= pilot["ci_upper"]
         assert 0.0 <= pilot["p_value"] <= 1.0
         assert pilot["sample_size"] >= 30
+        assert isinstance(pilot["model_type"], ModelType)
 
     for evalu in result["evaluate_results"]:
-        assert evalu["R_worst"] <= evalu["R_med"] <= evalu["R_best"]
+        assert evalu["return_worst"] <= evalu["return_median"] <= evalu["return_best"]
         assert 0.0 <= evalu["confidence"] <= 1.0
         assert evalu["cost"] > 0
+        assert isinstance(evalu["model_type"], ModelType)
 
     alloc = result["allocate_result"]
     for iid in alloc["selected_initiatives"]:
@@ -61,6 +63,7 @@ def test_contract_invariants():
     for report in result["outcome_reports"]:
         assert report["prediction_error"] == pytest.approx(report["actual_return"] - report["predicted_return"])
         assert report["sample_size_scale"] >= report["sample_size_pilot"]
+        assert isinstance(report["model_type"], ModelType)
 
 
 def test_empty_allocation():
