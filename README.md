@@ -1,8 +1,8 @@
-# Impact Engine Loop - Design Document
+# Impact Engine Orchestrator - Design Document
 
 ## Overview
 
-The Impact Engine Loop is an orchestration system for **scaling pilot experiments to full deployment**.
+The Impact Engine Orchestrator is an orchestration system for **scaling pilot experiments to full deployment**.
 
 **Input**: A cohort of project proposals (initiatives) to be piloted.
 
@@ -11,8 +11,20 @@ The Impact Engine Loop is an orchestration system for **scaling pilot experiment
 The core insight: pilot many initiatives, then invest in scaling only those that show both high impact and high confidence.
 
 <p align="center">
-  <img src="diagrams/overview.svg" alt="Impact Engine Loop Overview">
+  <img src="diagrams/overview.svg" alt="Impact Engine Orchestrator Overview">
 </p>
+
+---
+
+## Component Repositories
+
+| Component | Repository | Status |
+|-----------|------------|--------|
+| **MEASURE** | [eisenhauerIO/tools-impact-engine-measure](https://github.com/eisenhauerIO/tools-impact-engine-measure) | Needs integration |
+| **EVALUATE** | [eisenhauerIO/tools-impact-engine-evaluate](https://github.com/eisenhauerIO/tools-impact-engine-evaluate) | Needs integration |
+| **ALLOCATE** | [eisenhauerIO/tools-impact-engine-allocate](https://github.com/eisenhauerIO/tools-impact-engine-allocate) | Needs integration |
+| **SCALE** | Reuses MEASURE | — |
+| **SIMULATE** | [eisenhauerIO/tools-catalog-generator](https://github.com/eisenhauerIO/tools-catalog-generator) | Implemented |
 
 ---
 
@@ -97,19 +109,27 @@ result = solve_minimax_regret_optimization(
 ---
 
 ### 4. SCALE - Scale and Report
-**Package**: `tools-impact-engine-scale`
+**Package**: Reuses `tools-impact-engine-measure`
 
-**Purpose**: Run selected initiatives at scale and compare predicted vs actual outcomes.
+**Purpose**: Run MEASURE again on selected initiatives at larger scale, then compare predicted vs actual outcomes.
+
+**Process**:
+1. Take selected initiatives from ALLOCATE
+2. Run MEASURE on each (with larger sample size / longer time window)
+3. Compare scaled effect_estimate to pilot predictions
+4. Generate outcome report
 
 **Inputs** (from ALLOCATE):
 - Selected initiatives
-- Predicted returns
+- Predicted returns (from pilot MEASURE → EVALUATE)
 - Budget allocated
 
 **Produces**:
-- Actual returns at scale
+- Actual returns at scale (from scaled MEASURE)
 - Prediction error (actual - predicted)
 - Outcome report
+
+> **Note**: SCALE is not a separate component—it's the orchestrator calling MEASURE a second time on the subset of initiatives that passed ALLOCATE.
 
 ---
 
@@ -121,6 +141,31 @@ result = solve_minimax_regret_optimization(
 | ModelType | enum | `experiment` \| `quasi-experiment` \| `time-series` \| `observational` |
 | Confidence | float | [0.0, 1.0] |
 | Currency | float | >= 0.0 |
+
+---
+
+## Configuration
+
+Parameters are separated into two levels. The orchestrator owns the config and routes the right data to each pipeline stage.
+
+### Problem-Level Parameters
+Shared across the entire run, not specific to any initiative.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| budget | Currency | Total budget constraint for ALLOCATE |
+| scale_sample_size | int | Sample size for scale-phase MEASURE runs |
+| max_workers | int | Parallelism for fan-out stages |
+
+### Initiative-Level Parameters
+Specific to each initiative, known upfront (not produced by pipeline stages).
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| initiative_id | InitiativeId | Unique identifier |
+| cost_to_scale | Currency | Cost to scale this initiative to production |
+
+> **Key principle**: Initiative-level parameters (e.g. `cost_to_scale`) are **not** passed through pipeline stages. The orchestrator enriches stage inputs with the relevant initiative parameters from the config. This keeps contracts clean — each stage only produces its own outputs.
 
 ---
 
@@ -149,7 +194,7 @@ result = solve_minimax_regret_optimization(
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | InitiativeId | Initiative identifier |
+| initiative_id | InitiativeId | Initiative identifier |
 | confidence | Confidence | Methodology-based confidence (0-1) |
 | cost | Currency | Cost to scale this initiative |
 | R_best | float | Upper CI bound → best-case return |
@@ -170,7 +215,7 @@ result = solve_minimax_regret_optimization(
 | budget_allocated | dict[InitiativeId, Currency] | Budget allocated per initiative |
 
 **Invariants:**
-- `selected_initiatives` is non-empty (at least one initiative selected)
+- `selected_initiatives` may be empty (if no initiative fits the budget or all have negative expected returns, the orchestrator skips SCALE and returns an empty outcome report)
 - All keys in `predicted_returns` and `budget_allocated` exist in `selected_initiatives`
 - `sum(budget_allocated.values()) <= total_budget`
 
@@ -184,6 +229,9 @@ result = solve_minimax_regret_optimization(
 | prediction_error | float | Difference (actual - predicted) |
 | sample_size_pilot | int | Original pilot sample |
 | sample_size_scale | int | Scale sample size |
+| budget_allocated | Currency | Budget allocated to this initiative |
+| confidence_score | Confidence | Methodology-based confidence from EVALUATE |
+| model_type | ModelType | Source methodology |
 
 **Invariants:**
 - `prediction_error == actual_return - predicted_return`
@@ -241,7 +289,7 @@ No explicit versioning during prototype phase. Coordinate breaking changes manua
 Each run is independent. No persistent state between runs. This simplifies the system and makes runs reproducible.
 
 ### 3. Fully Autonomous
-No human approval gates. The loop runs end-to-end without intervention.
+No human approval gates. The orchestrator runs end-to-end without intervention.
 
 ### 4. CI Bounds → Scenarios
 The confidence interval from Measure maps directly to allocation scenarios:
@@ -276,6 +324,8 @@ MEASURE and EVALUATE process multiple initiatives in parallel. ALLOCATE receives
 ### Handler Interface
 
 Each component processes a **single initiative** and returns a single result. Parallelism is handled by the orchestrator, not the handlers.
+
+> **Exception**: ALLOCATE is a fan-in component — it receives all evaluated initiatives as a batch (`{"initiatives": [...], "budget": ...}`) and returns a single portfolio selection. This is inherent to the allocation problem: you can't select a portfolio by looking at initiatives one at a time.
 
 ```python
 def handler(event: dict, context=None) -> dict:
