@@ -1,0 +1,14 @@
+budget: 100000
+scale_sample_size: 5000
+
+initiatives:
+  - initiative_id: product-desc-enhancement
+    cost_to_scale: 15000
+  - initiative_id: checkout-flow-optimization
+    cost_to_scale: 25000
+  - initiative_id: search-relevance-tuning
+    cost_to_scale: 20000
+  - initiative_id: pricing-display-test
+    cost_to_scale: 10000
+  - initiative_id: recommendation-engine-v2
+    cost_to_scale: 30000

@@ -1,0 +1,34 @@
+repos:
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix, --ignore=E402]
+        types_or: [python, jupyter]
+      - id: ruff-format
+        types_or: [python, jupyter]
+
+  - repo: local
+    hooks:
+      - id: nbmake
+        name: nbmake (notebook execution)
+        entry: hatch run pytest --nbmake
+        language: system
+        files: ^notebooks/.*\.ipynb$
+        pass_filenames: true
+        types: [jupyter]
