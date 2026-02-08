@@ -11,7 +11,7 @@ The Impact Engine Orchestrator is an orchestration system for **scaling pilot ex
 The core insight: pilot many initiatives, then invest in scaling only those that show both high impact and high confidence.
 
 <p align="center">
-  <img src="diagrams/overview.svg" alt="Impact Engine Orchestrator Overview">
+  <img src="docs/source/_static/overview.svg" alt="Impact Engine Orchestrator Overview">
 </p>
 
 ---
@@ -309,7 +309,7 @@ Confidence scoring is primarily methodology-driven, not just statistical. An exp
 MEASURE and EVALUATE process multiple initiatives in parallel. ALLOCATE receives all results and runs once.
 
 <p align="center">
-  <img src="diagrams/pipeline.svg" alt="Pipeline Execution Pattern">
+  <img src="docs/source/_static/pipeline.svg" alt="Pipeline Execution Pattern">
 </p>
 
 ### Synchronization Points

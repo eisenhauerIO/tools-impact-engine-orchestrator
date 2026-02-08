@@ -77,6 +77,24 @@ Confidence scoring by model type:
 
 Scores initiatives by `confidence * R_med`, selects greedily until budget is exhausted.
 
+## Runner Script
+
+`scripts/run_once.py` runs the orchestrator end-to-end with mock components:
+
+```{eval-rst}
+.. literalinclude:: ../../../scripts/run_once.py
+   :language: python
+```
+
+## Configuration
+
+`config.yaml` at the repo root:
+
+```{eval-rst}
+.. literalinclude:: ../../../config.yaml
+   :language: yaml
+```
+
 ## Integration Path
 
 | Phase | Action | Verification |
