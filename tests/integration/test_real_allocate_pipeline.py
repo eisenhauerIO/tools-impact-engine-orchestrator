@@ -2,41 +2,42 @@ import pytest
 from portfolio_allocation import MinimaxRegretAllocate
 
 from impact_engine_orchestrator.components.evaluate.mock import MockEvaluate
-from impact_engine_orchestrator.components.measure.mock import MockMeasure
-from impact_engine_orchestrator.config import InitiativeConfig, PipelineConfig
+from impact_engine_orchestrator.config import PipelineConfig
 from impact_engine_orchestrator.contracts.types import ModelType
 from impact_engine_orchestrator.orchestrator import Orchestrator
 
 
-def _make_orchestrator(budget=100000, initiatives=None):
-    if initiatives is None:
-        initiatives = [
-            InitiativeConfig("init-001", cost_to_scale=10000),
-            InitiativeConfig("init-002", cost_to_scale=15000),
-            InitiativeConfig("init-003", cost_to_scale=8000),
+def _make_orchestrator(measure_env, budget=100000, initiative_specs=None):
+    make_initiative, make_measure = measure_env
+    if initiative_specs is None:
+        initiative_specs = [
+            ("init-001", 10000),
+            ("init-002", 15000),
+            ("init-003", 8000),
         ]
+    initiatives = [make_initiative(iid, cost) for iid, cost in initiative_specs]
     config = PipelineConfig(
         budget=budget,
         scale_sample_size=5000,
         initiatives=initiatives,
     )
     return Orchestrator(
-        measure=MockMeasure(),
+        measure=make_measure(initiatives),
         evaluate=MockEvaluate(),
         allocate=MinimaxRegretAllocate(),
         config=config,
     )
 
 
-def test_real_allocate_pipeline():
-    orchestrator = _make_orchestrator()
+def test_real_allocate_pipeline(measure_env):
+    orchestrator = _make_orchestrator(measure_env)
     result = orchestrator.run()
 
     assert len(result["outcome_reports"]) > 0
 
 
-def test_real_allocate_contract_invariants():
-    orchestrator = _make_orchestrator()
+def test_real_allocate_contract_invariants(measure_env):
+    orchestrator = _make_orchestrator(measure_env)
     result = orchestrator.run()
 
     alloc = result["allocate_result"]
@@ -50,16 +51,16 @@ def test_real_allocate_contract_invariants():
         assert isinstance(report["model_type"], ModelType)
 
 
-def test_real_allocate_determinism():
-    orchestrator = _make_orchestrator()
+def test_real_allocate_determinism(measure_env):
+    orchestrator = _make_orchestrator(measure_env)
     result1 = orchestrator.run()
     result2 = orchestrator.run()
 
     assert result1["allocate_result"] == result2["allocate_result"]
 
 
-def test_real_allocate_empty_budget():
-    orchestrator = _make_orchestrator(budget=1)
+def test_real_allocate_empty_budget(measure_env):
+    orchestrator = _make_orchestrator(measure_env, budget=1)
     result = orchestrator.run()
 
     assert result["allocate_result"]["selected_initiatives"] == []

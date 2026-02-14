@@ -2,34 +2,35 @@ import pytest
 
 from impact_engine_orchestrator.components.allocate.mock import MockAllocate
 from impact_engine_orchestrator.components.evaluate.mock import MockEvaluate
-from impact_engine_orchestrator.components.measure.mock import MockMeasure
-from impact_engine_orchestrator.config import InitiativeConfig, PipelineConfig
+from impact_engine_orchestrator.config import PipelineConfig
 from impact_engine_orchestrator.contracts.types import ModelType
 from impact_engine_orchestrator.orchestrator import Orchestrator
 
 
-def _make_orchestrator(budget=100000, initiatives=None):
-    if initiatives is None:
-        initiatives = [
-            InitiativeConfig("init-001", cost_to_scale=10000),
-            InitiativeConfig("init-002", cost_to_scale=15000),
-            InitiativeConfig("init-003", cost_to_scale=8000),
+def _make_orchestrator(measure_env, budget=100000, initiative_specs=None):
+    make_initiative, make_measure = measure_env
+    if initiative_specs is None:
+        initiative_specs = [
+            ("init-001", 10000),
+            ("init-002", 15000),
+            ("init-003", 8000),
         ]
+    initiatives = [make_initiative(iid, cost) for iid, cost in initiative_specs]
     config = PipelineConfig(
         budget=budget,
         scale_sample_size=5000,
         initiatives=initiatives,
     )
     return Orchestrator(
-        measure=MockMeasure(),
+        measure=make_measure(initiatives),
         evaluate=MockEvaluate(),
         allocate=MockAllocate(),
         config=config,
     )
 
 
-def test_all_mocks_pipeline():
-    orchestrator = _make_orchestrator()
+def test_all_mocks_pipeline(measure_env):
+    orchestrator = _make_orchestrator(measure_env)
     result = orchestrator.run()
 
     assert len(result["outcome_reports"]) > 0
@@ -39,8 +40,8 @@ def test_all_mocks_pipeline():
     assert result["pilot_results"] == result2["pilot_results"]
 
 
-def test_contract_invariants():
-    orchestrator = _make_orchestrator()
+def test_contract_invariants(measure_env):
+    orchestrator = _make_orchestrator(measure_env)
     result = orchestrator.run()
 
     for pilot in result["pilot_results"]:
@@ -66,9 +67,9 @@ def test_contract_invariants():
         assert isinstance(report["model_type"], ModelType)
 
 
-def test_empty_allocation():
+def test_empty_allocation(measure_env):
     """Budget too small for any initiative — no initiatives selected."""
-    orchestrator = _make_orchestrator(budget=1)
+    orchestrator = _make_orchestrator(measure_env, budget=1)
     result = orchestrator.run()
 
     assert result["allocate_result"]["selected_initiatives"] == []
@@ -76,8 +77,8 @@ def test_empty_allocation():
     assert result["outcome_reports"] == []
 
 
-def test_single_initiative():
-    orchestrator = _make_orchestrator(initiatives=[InitiativeConfig("only-one", cost_to_scale=5000)])
+def test_single_initiative(measure_env):
+    orchestrator = _make_orchestrator(measure_env, initiative_specs=[("only-one", 5000)])
     result = orchestrator.run()
 
     assert len(result["pilot_results"]) == 1

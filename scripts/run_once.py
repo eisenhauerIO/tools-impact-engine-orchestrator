@@ -9,7 +9,7 @@ import argparse
 from portfolio_allocation import MinimaxRegretAllocate
 
 from impact_engine_orchestrator.components.evaluate.mock import MockEvaluate
-from impact_engine_orchestrator.components.measure.mock import MockMeasure
+from impact_engine_orchestrator.components.measure.measure import Measure
 from impact_engine_orchestrator.config import load_config
 from impact_engine_orchestrator.orchestrator import Orchestrator
 
@@ -50,8 +50,13 @@ def main():
 
     config = load_config(args.config)
 
+    measure = Measure(
+        initiatives=config.initiatives,
+        storage_url=config.measure.storage_url,
+    )
+
     orchestrator = Orchestrator(
-        measure=MockMeasure(),
+        measure=measure,
         evaluate=MockEvaluate(),
         allocate=MinimaxRegretAllocate(),
         config=config,

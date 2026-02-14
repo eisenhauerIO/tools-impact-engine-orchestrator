@@ -23,7 +23,7 @@ SCALE is not a separate component. It is the orchestrator calling MEASURE a seco
 impact_engine_orchestrator/
 ├── __init__.py
 ├── orchestrator.py         # Fan-out/fan-in pipeline runner
-├── config.py               # PipelineConfig
+├── config.py               # PipelineConfig, MeasureConfig
 ├── contracts/              # Dataclasses with validation
 │   ├── __init__.py
 │   ├── types.py            # ModelType enum
@@ -35,14 +35,16 @@ impact_engine_orchestrator/
     ├── __init__.py
     ├── base.py             # PipelineComponent ABC
     ├── measure/
-    │   └── mock.py         # MockMeasure
+    │   └── measure.py      # Measure (wraps impact_engine)
     ├── evaluate/
     │   └── mock.py         # MockEvaluate
     └── allocate/
         └── mock.py         # MockAllocate
 tests/
+├── conftest.py
 └── integration/
-    └── test_mock_pipeline.py
+    ├── test_mock_pipeline.py
+    └── test_real_allocate_pipeline.py
 scripts/
 └── run_once.py
 ```
@@ -51,16 +53,12 @@ scripts/
 
 | Component | Status | Implementation |
 |-----------|--------|----------------|
-| MEASURE | Needs integration | **MOCK** (deterministic fake results) |
+| MEASURE | Integrated | **REAL** (`impact-engine` via pip from GitHub) |
 | EVALUATE | Needs integration | **MOCK** (confidence scoring) |
 | ALLOCATE | Integrated | **REAL** (`portfolio-allocation` via pip from GitHub) |
 | Orchestrator | Implemented | **REAL** (wires everything together) |
 
 ## Mock Components
-
-### MockMeasure
-
-Deterministic via hash seed, with a noise component keyed on `seed + sample_size` so pilot vs scale produce related but distinct estimates.
 
 ### MockEvaluate
 
@@ -70,8 +68,9 @@ Confidence scoring by model type:
 |------------|------------------|
 | Experiment | 0.85 -- 1.00 |
 | Quasi-experiment | 0.60 -- 0.84 |
-| Time-series | 0.40 -- 0.59 |
-| Observational | 0.20 -- 0.39 |
+| Time-series / ITS | 0.40 -- 0.59 |
+| Observational / Metrics Approx | 0.20 -- 0.39 |
+| Synthetic Control / Matching / Subclass | 0.60 -- 0.84 |
 
 ### MockAllocate
 
@@ -79,7 +78,7 @@ Scores initiatives by `confidence * R_med`, selects greedily until budget is exh
 
 ## Runner Script
 
-`scripts/run_once.py` runs the orchestrator end-to-end with mock components:
+`scripts/run_once.py` runs the orchestrator end-to-end:
 
 ```{eval-rst}
 .. literalinclude:: ../../../scripts/run_once.py
@@ -99,8 +98,8 @@ Scores initiatives by `confidence * R_med`, selects greedily until budget is exh
 
 | Phase | Action | Verification |
 |-------|--------|--------------|
-| 1 | All Mocks | End-to-end flow works, deterministic |
-| 2 | Real MEASURE | Swap `MockMeasure` → `RealMeasureAdapter` |
+| ~~1~~ | ~~All Mocks~~ | ~~End-to-end flow works, deterministic~~ |
+| ~~2~~ | ~~Real MEASURE~~ | ~~Done — `Measure` adapter wrapping `impact_engine`~~ |
 | ~~3~~ | ~~Real ALLOCATE~~ | ~~Done — `MinimaxRegretAllocate` from `portfolio-allocation`~~ |
 | 4 | Real EVALUATE | Build confidence scoring (when designed) |
 
