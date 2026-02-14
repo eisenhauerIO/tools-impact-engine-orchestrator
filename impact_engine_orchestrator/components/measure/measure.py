@@ -6,7 +6,6 @@ from dataclasses import asdict
 from impact_engine import evaluate_impact
 
 from impact_engine_orchestrator.components.base import PipelineComponent
-from impact_engine_orchestrator.config import InitiativeConfig
 from impact_engine_orchestrator.contracts.measure import MeasureResult
 from impact_engine_orchestrator.contracts.types import ModelType
 
@@ -102,14 +101,13 @@ def _extract_estimates(result: dict) -> dict:
 class Measure(PipelineComponent):
     """Adapter that delegates to impact_engine.evaluate_impact."""
 
-    def __init__(self, initiatives: list[InitiativeConfig], storage_url: str):
-        self._config_lookup = {i.initiative_id: i.measure_config for i in initiatives}
+    def __init__(self, storage_url: str):
         self._storage_url = storage_url
 
     def execute(self, event: dict) -> dict:
         """Run evaluate_impact for one initiative and return a MeasureResult dict."""
         initiative_id = event["initiative_id"]
-        config_path = self._config_lookup[initiative_id]
+        config_path = event["measure_config"]
 
         result_path = evaluate_impact(
             config_path=config_path,

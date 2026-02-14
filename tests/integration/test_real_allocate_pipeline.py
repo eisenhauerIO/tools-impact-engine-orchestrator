@@ -22,7 +22,7 @@ def _make_orchestrator(measure_env, budget=100000, initiative_specs=None):
         initiatives=initiatives,
     )
     return Orchestrator(
-        measure=make_measure(initiatives),
+        measure=make_measure(),
         evaluate=Evaluate(),
         allocate=MinimaxRegretAllocate(),
         config=config,

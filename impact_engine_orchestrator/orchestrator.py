@@ -1,5 +1,7 @@
 """Fan-out/fan-in pipeline runner."""
 
+from __future__ import annotations
+
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 
@@ -23,14 +25,31 @@ class Orchestrator:
         self.allocate = allocate
         self.config = config
 
+    @classmethod
+    def from_config(cls, config: PipelineConfig) -> Orchestrator:
+        """Build an Orchestrator from a PipelineConfig with stage configs."""
+        from impact_engine_orchestrator import registry
+
+        assert config.measure_stage is not None, "measure_stage required for from_config"
+        assert config.evaluate_stage is not None, "evaluate_stage required for from_config"
+        assert config.allocate_stage is not None, "allocate_stage required for from_config"
+
+        measure = registry.build(config.measure_stage)
+        evaluate = registry.build(config.evaluate_stage)
+        allocate = registry.build(config.allocate_stage)
+        return cls(measure=measure, evaluate=evaluate, allocate=allocate, config=config)
+
     def run(self) -> dict:
         """Execute all pipeline stages and return combined results."""
         initiatives = self.config.initiatives
         cost_by_id = {i.initiative_id: i.cost_to_scale for i in initiatives}
+        config_by_id = {i.initiative_id: i.measure_config for i in initiatives}
 
         with ThreadPoolExecutor(max_workers=self.config.max_workers) as pool:
-            # 1. MEASURE (pilot) - parallel
-            measure_inputs = [{"initiative_id": i.initiative_id} for i in initiatives]
+            # 1. MEASURE (pilot) - parallel (enrich with measure_config)
+            measure_inputs = [
+                {"initiative_id": i.initiative_id, "measure_config": i.measure_config} for i in initiatives
+            ]
             pilot_results = self._fan_out(self.measure, measure_inputs, pool)
 
             # 2. EVALUATE - parallel (enrich with cost_to_scale from config)
@@ -45,10 +64,15 @@ class Orchestrator:
                 }
             )
 
-            # 4. MEASURE (scale) - parallel on selected only
+            # 4. MEASURE (scale) - parallel on selected only (enrich with measure_config)
             selected_ids = alloc_result["selected_initiatives"]
             scale_inputs = [
-                {"initiative_id": iid, "sample_size": self.config.scale_sample_size} for iid in selected_ids
+                {
+                    "initiative_id": iid,
+                    "sample_size": self.config.scale_sample_size,
+                    "measure_config": config_by_id[iid],
+                }
+                for iid in selected_ids
             ]
             scale_results = self._fan_out(self.measure, scale_inputs, pool)
 

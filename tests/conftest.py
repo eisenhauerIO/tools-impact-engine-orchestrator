@@ -14,7 +14,7 @@ def measure_env(tmp_path):
 
     Returns (make_initiative, make_measure) where:
     - make_initiative(id, cost) creates an InitiativeConfig with a working measure config
-    - make_measure(initiatives) creates a Measure adapter wired to the temp storage
+    - make_measure() creates a Measure adapter wired to the temp storage
     """
     products_df = pd.DataFrame(
         {
@@ -68,7 +68,7 @@ def measure_env(tmp_path):
             measure_config=config_cache[initiative_id],
         )
 
-    def make_measure(initiatives):
-        return Measure(initiatives=initiatives, storage_url=storage_url)
+    def make_measure():
+        return Measure(storage_url=storage_url)
 
     return make_initiative, make_measure

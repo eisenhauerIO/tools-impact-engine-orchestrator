@@ -8,10 +8,6 @@ Usage:
 import argparse
 from pathlib import Path
 
-from impact_engine_evaluate import Evaluate
-from portfolio_allocation import MinimaxRegretAllocate
-
-from impact_engine_orchestrator.components.measure.measure import Measure
 from impact_engine_orchestrator.config import load_config
 from impact_engine_orchestrator.orchestrator import Orchestrator
 
@@ -52,19 +48,7 @@ def main():
     args = parser.parse_args()
 
     config = load_config(args.config)
-
-    measure = Measure(
-        initiatives=config.initiatives,
-        storage_url=config.measure.storage_url,
-    )
-
-    orchestrator = Orchestrator(
-        measure=measure,
-        evaluate=Evaluate(),
-        allocate=MinimaxRegretAllocate(),
-        config=config,
-    )
-
+    orchestrator = Orchestrator.from_config(config)
     result = orchestrator.run()
     print_reports(result)
 

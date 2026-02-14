@@ -33,13 +33,27 @@ class PipelineComponent(ABC):
         """Process single initiative, return result."""
 ```
 
-The [`Orchestrator`](../../impact_engine_orchestrator/orchestrator.py) receives three components via constructor injection and knows nothing about their internals. Swapping `MockAllocate` for `MinimaxRegretAllocate` is a one-line change at construction time.
+The [`Orchestrator`](../../impact_engine_orchestrator/orchestrator.py) receives three components via constructor injection and knows nothing about their internals. Components are selected via YAML configuration — swapping `MockAllocate` for `MinimaxRegretAllocate` is a config change, not a code change:
+
+```yaml
+# configs/allocate.yaml
+component: MinimaxRegretAllocate  # or MockAllocate
+```
+
+The [`Orchestrator.from_config()`](../../impact_engine_orchestrator/orchestrator.py) class method uses a [component registry](../../impact_engine_orchestrator/registry.py) to resolve YAML component names to classes and construct them with stage-level kwargs:
+
+```python
+config = load_config("config.yaml")
+orchestrator = Orchestrator.from_config(config)
+```
+
+Direct Python construction still works for tests and advanced usage:
 
 ```python
 orchestrator = Orchestrator(
-    measure=Measure(...),
+    measure=Measure(storage_url="./data"),
     evaluate=Evaluate(),
-    allocate=MinimaxRegretAllocate(),  # or MockAllocate()
+    allocate=MinimaxRegretAllocate(),
     config=config,
 )
 ```
@@ -63,21 +77,32 @@ Data flows between stages as `dict`s (serialized via `asdict()` from dataclass c
 
 ### Enrichment
 
-The orchestrator owns one data transformation: between MEASURE and EVALUATE, it injects `cost_to_scale` from the [config](../../impact_engine_orchestrator/config.py) into each MeasureResult dict. This keeps stage contracts clean — MEASURE doesn't need to know about costs, and EVALUATE doesn't need access to the config.
+The orchestrator enriches stage inputs with cross-cutting data from the pipeline config, keeping each stage's contract free of passthrough fields:
+
+- **MEASURE** receives `measure_config` — the per-initiative config path, resolved from the orchestrator YAML
+- **EVALUATE** receives `cost_to_scale` — injected into each MeasureResult dict before passing to EVALUATE
 
 ```python
+# MEASURE enrichment (pilot and scale)
+measure_inputs = [
+    {"initiative_id": i.initiative_id, "measure_config": i.measure_config}
+    for i in initiatives
+]
+
+# EVALUATE enrichment
 eval_inputs = [{**result, "cost_to_scale": cost_by_id[result["initiative_id"]]}
                for result in pilot_results]
 ```
 
-### Two-Level Configuration
+### Three-Level Configuration
 
-Parameters are separated into two levels, both defined in a single [YAML config](../../config.yaml):
+Parameters are organized into three levels:
 
-- **Problem-level** (shared across the run): `budget`, `scale_sample_size`, `max_workers`
-- **Initiative-level** (per initiative, known upfront): `initiative_id`, `cost_to_scale`
+- **Orchestrator manifest** ([YAML config](../../docs/source/impact-loop/config.yaml)): `budget`, `scale_sample_size`, `max_workers`, and references to stage config files
+- **Stage configs** (e.g., `configs/measure.yaml`): component selection and stage-level constructor kwargs
+- **Initiative-level** (per initiative, in the manifest): `initiative_id`, `cost_to_scale`, `measure_config`
 
-Initiative-level parameters are *not* passed through pipeline stages. The orchestrator enriches stage inputs with the relevant parameters from config, keeping each stage's contract free of passthrough fields.
+All paths in the orchestrator YAML are resolved relative to the YAML file's directory. Initiative-level parameters are *not* passed through pipeline stages — the orchestrator enriches stage inputs with the relevant parameters from config.
 
 ---
 

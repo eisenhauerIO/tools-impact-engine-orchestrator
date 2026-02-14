@@ -1,6 +1,7 @@
 """Pipeline and initiative configuration."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from pathlib import Path
 
 import yaml
 
@@ -15,10 +16,11 @@ class InitiativeConfig:
 
 
 @dataclass
-class MeasureConfig:
-    """Shared settings for the MEASURE stage."""
+class StageConfig:
+    """Parsed stage configuration (component name + constructor kwargs)."""
 
-    storage_url: str = "./data/measure"
+    component: str
+    kwargs: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -29,7 +31,9 @@ class PipelineConfig:
     scale_sample_size: int
     initiatives: list[InitiativeConfig]
     max_workers: int = 4
-    measure: MeasureConfig | None = None
+    measure_stage: StageConfig | None = None
+    evaluate_stage: StageConfig | None = None
+    allocate_stage: StageConfig | None = None
 
     def __post_init__(self):
         """Validate configuration invariants."""
@@ -39,17 +43,50 @@ class PipelineConfig:
         assert self.max_workers > 0, f"max_workers must be positive, got {self.max_workers}"
 
 
-def load_config(path: str) -> PipelineConfig:
-    """Load a PipelineConfig from a YAML file."""
+def _load_stage_config(config_path: str) -> StageConfig:
+    """Load a stage config YAML and return a StageConfig."""
+    path = Path(config_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Stage config file not found: {config_path}")
     with open(path) as f:
         raw = yaml.safe_load(f)
-    measure_raw = raw.get("measure")
-    measure = MeasureConfig(**measure_raw) if measure_raw else None
+    component = raw.pop("component")
+    return StageConfig(component=component, kwargs=raw)
+
+
+def load_config(path: str) -> PipelineConfig:
+    """Load a PipelineConfig from a YAML file."""
+    config_dir = Path(path).parent
+    with open(path) as f:
+        raw = yaml.safe_load(f)
+
+    # Load stage configs (resolve paths relative to orchestrator YAML)
+    measure_stage = None
+    if "measure" in raw and "config" in raw["measure"]:
+        measure_stage = _load_stage_config(config_dir / raw["measure"]["config"])
+
+    evaluate_stage = None
+    if "evaluate" in raw and "config" in raw["evaluate"]:
+        evaluate_stage = _load_stage_config(config_dir / raw["evaluate"]["config"])
+
+    allocate_stage = None
+    if "allocate" in raw and "config" in raw["allocate"]:
+        allocate_stage = _load_stage_config(config_dir / raw["allocate"]["config"])
+
+    # Resolve initiative measure_config paths relative to orchestrator YAML
+    initiatives = []
+    for i in raw["initiatives"]:
+        ic = InitiativeConfig(**i)
+        if ic.measure_config:
+            ic.measure_config = str(config_dir / ic.measure_config)
+        initiatives.append(ic)
 
     return PipelineConfig(
         budget=raw["budget"],
         scale_sample_size=raw.get("scale_sample_size", 5000),
         max_workers=raw.get("max_workers", 4),
-        initiatives=[InitiativeConfig(**i) for i in raw["initiatives"]],
-        measure=measure,
+        initiatives=initiatives,
+        measure_stage=measure_stage,
+        evaluate_stage=evaluate_stage,
+        allocate_stage=allocate_stage,
     )
