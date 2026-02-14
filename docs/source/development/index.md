@@ -53,7 +53,7 @@ scripts/
 |-----------|--------|----------------|
 | MEASURE | Needs integration | **MOCK** (deterministic fake results) |
 | EVALUATE | Needs integration | **MOCK** (confidence scoring) |
-| ALLOCATE | Needs integration | **MOCK** (simple selection) |
+| ALLOCATE | Integrated | **REAL** (`portfolio-allocation` via pip from GitHub) |
 | Orchestrator | Implemented | **REAL** (wires everything together) |
 
 ## Mock Components
@@ -101,7 +101,7 @@ Scores initiatives by `confidence * R_med`, selects greedily until budget is exh
 |-------|--------|--------------|
 | 1 | All Mocks | End-to-end flow works, deterministic |
 | 2 | Real MEASURE | Swap `MockMeasure` → `RealMeasureAdapter` |
-| 3 | Real ALLOCATE | Swap `MockAllocate` → `RealAllocateAdapter` |
+| ~~3~~ | ~~Real ALLOCATE~~ | ~~Done — `MinimaxRegretAllocate` from `portfolio-allocation`~~ |
 | 4 | Real EVALUATE | Build confidence scoring (when designed) |
 
 Each swap is a single line change in the orchestrator constructor.

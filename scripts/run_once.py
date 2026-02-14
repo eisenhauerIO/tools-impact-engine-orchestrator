@@ -1,4 +1,4 @@
-"""Run the Impact Engine Orchestrator once with mock components.
+"""Run the Impact Engine Orchestrator once.
 
 Usage:
     python scripts/run_once.py --config config.yaml
@@ -6,7 +6,8 @@ Usage:
 
 import argparse
 
-from impact_engine_orchestrator.components.allocate.mock import MockAllocate
+from portfolio_allocation import MinimaxRegretAllocate
+
 from impact_engine_orchestrator.components.evaluate.mock import MockEvaluate
 from impact_engine_orchestrator.components.measure.mock import MockMeasure
 from impact_engine_orchestrator.config import load_config
@@ -52,7 +53,7 @@ def main():
     orchestrator = Orchestrator(
         measure=MockMeasure(),
         evaluate=MockEvaluate(),
-        allocate=MockAllocate(),
+        allocate=MinimaxRegretAllocate(),
         config=config,
     )
 

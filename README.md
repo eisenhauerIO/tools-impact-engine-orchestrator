@@ -22,7 +22,7 @@ The core insight: pilot many initiatives, then invest in scaling only those that
 |-----------|------------|--------|
 | **MEASURE** | [eisenhauerIO/tools-impact-engine-measure](https://github.com/eisenhauerIO/tools-impact-engine-measure) | Needs integration |
 | **EVALUATE** | [eisenhauerIO/tools-impact-engine-evaluate](https://github.com/eisenhauerIO/tools-impact-engine-evaluate) | Needs integration |
-| **ALLOCATE** | [eisenhauerIO/tools-impact-engine-allocate](https://github.com/eisenhauerIO/tools-impact-engine-allocate) | Needs integration |
+| **ALLOCATE** | [eisenhauerIO/tools-impact-engine-allocate](https://github.com/eisenhauerIO/tools-impact-engine-allocate) | Integrated |
 | **SCALE** | Reuses MEASURE | — |
 | **SIMULATE** | [eisenhauerIO/tools-catalog-generator](https://github.com/eisenhauerIO/tools-catalog-generator) | Implemented |
 
