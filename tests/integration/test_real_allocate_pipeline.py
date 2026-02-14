@@ -1,6 +1,6 @@
 import pytest
+from impact_engine_allocate import MinimaxRegretAllocate
 from impact_engine_evaluate import Evaluate
-from portfolio_allocation import MinimaxRegretAllocate
 
 from impact_engine_orchestrator.config import PipelineConfig
 from impact_engine_orchestrator.contracts.types import ModelType

@@ -44,7 +44,7 @@ def test_build_mock_allocate():
 
 def test_build_minimax_regret_allocate():
     """Registry builds MinimaxRegretAllocate."""
-    from portfolio_allocation import MinimaxRegretAllocate
+    from impact_engine_allocate import MinimaxRegretAllocate
 
     stage = StageConfig(component="MinimaxRegretAllocate")
     component = build(stage)
@@ -99,8 +99,8 @@ def test_from_config_round_trip(tmp_path):
 
 def test_from_config_with_real_components(tmp_path):
     """Load config with Measure + Evaluate + MinimaxRegretAllocate → verify types."""
+    from impact_engine_allocate import MinimaxRegretAllocate
     from impact_engine_evaluate import Evaluate
-    from portfolio_allocation import MinimaxRegretAllocate
 
     from impact_engine_orchestrator.components.measure.measure import Measure
 

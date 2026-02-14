@@ -1,9 +1,9 @@
-"""MEASURE adapter wrapping impact_engine.evaluate_impact."""
+"""MEASURE adapter wrapping impact_engine_measure.evaluate_impact."""
 
 import json
 from dataclasses import asdict
 
-from impact_engine import evaluate_impact
+from impact_engine_measure import evaluate_impact
 
 from impact_engine_orchestrator.components.base import PipelineComponent
 from impact_engine_orchestrator.contracts.measure import MeasureResult
@@ -99,7 +99,7 @@ def _extract_estimates(result: dict) -> dict:
 
 
 class Measure(PipelineComponent):
-    """Adapter that delegates to impact_engine.evaluate_impact."""
+    """Adapter that delegates to impact_engine_measure.evaluate_impact."""
 
     def __init__(self, storage_url: str):
         self._storage_url = storage_url

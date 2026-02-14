@@ -1,7 +1,7 @@
 """Component registry mapping short names to class objects."""
 
+from impact_engine_allocate import MinimaxRegretAllocate
 from impact_engine_evaluate import Evaluate
-from portfolio_allocation import MinimaxRegretAllocate
 
 from impact_engine_orchestrator.components.allocate.mock import MockAllocate
 from impact_engine_orchestrator.components.base import PipelineComponent

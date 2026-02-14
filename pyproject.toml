@@ -4,8 +4,8 @@ version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
     "pyyaml",
-    "portfolio-allocation @ git+https://github.com/eisenhauerIO/tools-impact-engine-allocate.git",
-    "impact-engine @ git+https://github.com/eisenhauerIO/tools-impact-engine-measure.git",
+    "impact-engine-allocate @ git+https://github.com/eisenhauerIO/tools-impact-engine-allocate.git",
+    "impact_engine_measure @ git+https://github.com/eisenhauerIO/tools-impact-engine-measure.git",
     "impact-engine-evaluate @ git+https://github.com/eisenhauerIO/tools-impact-engine-evaluate.git",
 ]
 
