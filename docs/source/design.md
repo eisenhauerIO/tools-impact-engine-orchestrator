@@ -1,0 +1,127 @@
+# Design
+
+*Last updated: February 2026*
+
+## Overview
+
+The Impact Engine Orchestrator runs a portfolio-selection pipeline across multiple initiatives. Given a set of candidate initiatives, it measures their causal impact at pilot scale, scores confidence, allocates budget to the most promising ones, then measures again at full scale to verify predictions.
+
+The architecture is **fan-out/fan-in**. Three external tools — [MEASURE](https://github.com/eisenhauerIO/tools-impact-engine-measure), [EVALUATE](https://github.com/eisenhauerIO/tools-impact-engine-evaluate), and [ALLOCATE](https://github.com/eisenhauerIO/tools-impact-engine-allocate) — each own one pipeline stage. The orchestrator wires them together, parallelizes independent work, and enriches data between stages.
+
+```
+MEASURE (pilot)  ──fan-out──►  [N initiatives in parallel]
+       │
+EVALUATE         ──fan-out──►  [N initiatives in parallel]
+       │
+ALLOCATE         ──fan-in───►  [select K ≤ N for scaling]
+       │
+MEASURE (scale)  ──fan-out──►  [K initiatives in parallel]
+       │
+REPORT           ──fan-in───►  [predicted vs actual for K]
+```
+
+---
+
+## Plugin Architecture
+
+All pipeline components implement a single abstract interface: [`PipelineComponent`](../../impact_engine_orchestrator/components/base.py).
+
+```python
+class PipelineComponent(ABC):
+    @abstractmethod
+    def execute(self, event: dict) -> dict:
+        """Process single initiative, return result."""
+```
+
+The [`Orchestrator`](../../impact_engine_orchestrator/orchestrator.py) receives three components via constructor injection and knows nothing about their internals. Swapping `MockAllocate` for `MinimaxRegretAllocate` is a one-line change at construction time.
+
+```python
+orchestrator = Orchestrator(
+    measure=Measure(...),
+    evaluate=Evaluate(),
+    allocate=MinimaxRegretAllocate(),  # or MockAllocate()
+    config=config,
+)
+```
+
+SCALE is not a fourth component — it reuses the same `Measure` instance at a higher sample size. This keeps the system at **3 components + orchestrator**.
+
+> **ALLOCATE exception**: The ABC describes a single-initiative handler, but ALLOCATE is inherently a fan-in stage — it receives all evaluated initiatives as a batch (`{"initiatives": [...], "budget": ...}`) and returns a single portfolio selection. You can't select a portfolio by looking at initiatives one at a time.
+
+---
+
+## Data Flow and Contracts
+
+Data flows between stages as `dict`s (serialized via `asdict()` from dataclass contracts). Each contract is a dataclass with `__post_init__` validation that catches malformed data at construction time.
+
+| Boundary | Contract | Key Invariants |
+|----------|----------|----------------|
+| MEASURE output | [`MeasureResult`](../../impact_engine_orchestrator/contracts/measure.py) | `ci_lower <= effect_estimate <= ci_upper`, `sample_size >= 30` |
+| EVALUATE output | [`EvaluateResult`](../../_external/tools-impact-engine-evaluate/impact_engine_evaluate/scorer.py) | `return_worst <= return_median <= return_best`, `0 <= confidence <= 1` |
+| ALLOCATE output | [`AllocateResult`](../../impact_engine_orchestrator/contracts/allocate.py) | `sum(budget_allocated) <= budget`, selected IDs consistent across dicts |
+| Final output | [`OutcomeReport`](../../impact_engine_orchestrator/contracts/report.py) | `prediction_error == actual_return - predicted_return` |
+
+### Enrichment
+
+The orchestrator owns one data transformation: between MEASURE and EVALUATE, it injects `cost_to_scale` from the [config](../../impact_engine_orchestrator/config.py) into each MeasureResult dict. This keeps stage contracts clean — MEASURE doesn't need to know about costs, and EVALUATE doesn't need access to the config.
+
+```python
+eval_inputs = [{**result, "cost_to_scale": cost_by_id[result["initiative_id"]]}
+               for result in pilot_results]
+```
+
+### Two-Level Configuration
+
+Parameters are separated into two levels, both defined in a single [YAML config](../../config.yaml):
+
+- **Problem-level** (shared across the run): `budget`, `scale_sample_size`, `max_workers`
+- **Initiative-level** (per initiative, known upfront): `initiative_id`, `cost_to_scale`
+
+Initiative-level parameters are *not* passed through pipeline stages. The orchestrator enriches stage inputs with the relevant parameters from config, keeping each stage's contract free of passthrough fields.
+
+---
+
+## Cross-Tool Boundaries
+
+The orchestrator integrates with three external tools, each consumed as a pip dependency from GitHub:
+
+| Tool | Package | Interface |
+|------|---------|-----------|
+| MEASURE | `impact-engine` | `evaluate_impact(config_path, storage_url, job_id) -> str` (returns path to JSON) |
+| EVALUATE | `impact-engine-evaluate` | `Evaluate` class implementing `PipelineComponent` |
+| ALLOCATE | `portfolio-allocation` | `MinimaxRegretAllocate` class implementing `PipelineComponent` |
+
+The MEASURE boundary is the most complex: the [`Measure` adapter](../../impact_engine_orchestrator/components/measure/measure.py) calls `evaluate_impact`, reads the resulting JSON envelope (`{schema_version, model_type, data: {impact_estimates, model_summary, ...}}`), and normalizes the model-specific output into a `MeasureResult`. This extraction handles six model types, each with different key structures.
+
+EVALUATE and ALLOCATE are cleaner boundaries — both tools export classes that already implement `PipelineComponent`, so the orchestrator passes dicts directly without parsing.
+
+### Contract Evolution
+
+During prototype phase, two rules prevent breakage:
+
+1. **Producers can add fields freely** — additive changes are always safe
+2. **Consumers must be tolerant** — ignore unknown fields, handle missing optional fields with defaults
+
+No explicit schema versioning yet. Breaking changes are coordinated manually across tools.
+
+---
+
+## Concurrency
+
+Fan-out stages (MEASURE and EVALUATE) run initiatives in parallel using `ThreadPoolExecutor`. The orchestrator's [`_fan_out`](../../impact_engine_orchestrator/orchestrator.py) method submits all inputs, then collects results in submission order. If any component raises, the exception propagates immediately.
+
+```python
+def _fan_out(self, component, inputs, pool):
+    futures = [pool.submit(component.execute, inp) for inp in inputs]
+    return [f.result() for f in futures]
+```
+
+ALLOCATE runs once (sequential). SCALE fans out again over only the selected subset.
+
+---
+
+## Engineering Practices
+
+The codebase enforces quality through [pre-commit hooks](../../.pre-commit-config.yaml) and [Ruff](https://docs.astral.sh/ruff/) for linting and formatting. Tests use [pytest](../../tests/) with real components backed by simulated data — the [`measure_env`](../../tests/conftest.py) fixture generates synthetic product data and working MEASURE configs in a temp directory, enabling end-to-end integration tests without external services.
+
+Dependency injection makes testing straightforward: swap any component at construction time. Dedicated tests verify [contract invariants](../../tests/integration/test_mock_pipeline.py) across all stage boundaries, [determinism](../../tests/integration/test_real_allocate_pipeline.py) across repeated runs, and [edge cases](../../tests/integration/test_mock_pipeline.py) like empty allocations (budget too small for any initiative).

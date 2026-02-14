@@ -1,0 +1,17 @@
+STORAGE:
+  PATH: data/initiatives/pricing-display-test
+
+RULE:
+  PRODUCTS:
+    FUNCTION: simulate_products_rule_based
+    PARAMS:
+      num_products: 100
+      seed: 404
+  METRICS:
+    FUNCTION: simulate_metrics_rule_based
+    PARAMS:
+      date_start: "2024-10-01"
+      date_end: "2024-12-31"
+      sale_prob: 0.7
+      seed: 404
+      granularity: "daily"

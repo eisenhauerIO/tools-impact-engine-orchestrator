@@ -1,0 +1,23 @@
+budget: 100000
+scale_sample_size: 5000
+max_workers: 4
+
+measure:
+  storage_url: ./data/measure
+
+initiatives:
+  - initiative_id: product-desc-enhancement
+    cost_to_scale: 15000
+    measure_config: docs/source/impact-loop/configs/product-desc-enhancement.yaml
+  - initiative_id: checkout-flow-optimization
+    cost_to_scale: 25000
+    measure_config: docs/source/impact-loop/configs/checkout-flow-optimization.yaml
+  - initiative_id: search-relevance-tuning
+    cost_to_scale: 20000
+    measure_config: docs/source/impact-loop/configs/search-relevance-tuning.yaml
+  - initiative_id: pricing-display-test
+    cost_to_scale: 10000
+    measure_config: docs/source/impact-loop/configs/pricing-display-test.yaml
+  - initiative_id: recommendation-engine-v2
+    cost_to_scale: 30000
+    measure_config: docs/source/impact-loop/configs/recommendation-engine-v2.yaml

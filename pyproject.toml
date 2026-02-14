@@ -52,8 +52,8 @@ convention = "numpy"
 [tool.ruff.lint.per-file-ignores]
 "*.ipynb" = ["D", "E402", "F", "I"]
 "tests/**" = ["D"]
-"scripts/**" = ["D"]
+"docs/source/impact-loop/*.py" = ["D"]
 
 [tool.pytest.ini_options]
 addopts = "-v --nbmake"
-testpaths = ["tests", "docs/source/tutorial"]
+testpaths = ["tests", "docs/source/impact-loop"]

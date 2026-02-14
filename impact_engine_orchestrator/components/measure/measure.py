@@ -11,6 +11,20 @@ from impact_engine_orchestrator.contracts.measure import MeasureResult
 from impact_engine_orchestrator.contracts.types import ModelType
 
 
+def _resolve_param_key(treatment_var: str, params: dict) -> str:
+    """Find the statsmodels coefficient key for a treatment variable.
+
+    Statsmodels encodes categoricals as e.g. ``enriched[T.True]``.
+    Returns an exact match first, then falls back to prefix matching.
+    """
+    if treatment_var in params:
+        return treatment_var
+    matches = [k for k in params if k.startswith(f"{treatment_var}[")]
+    if len(matches) == 1:
+        return matches[0]
+    raise KeyError(f"Treatment variable {treatment_var!r} not found in params: {list(params.keys())}")
+
+
 def _extract_estimates(result: dict) -> dict:
     """Extract effect_estimate, ci_lower, ci_upper, p_value, sample_size from model-specific output."""
     model_type = result["model_type"]
@@ -18,14 +32,17 @@ def _extract_estimates(result: dict) -> dict:
     summary = result["data"]["model_summary"]
 
     if model_type == "experiment":
-        # OLS regression: first predictor in formula is the treatment variable
+        # OLS regression: first predictor in formula is the treatment variable.
+        # statsmodels encodes categoricals as e.g. "enriched[T.True]", so we
+        # match by prefix when an exact key isn't found.
         formula = result["data"]["model_params"]["formula"]
         treatment_var = formula.split("~")[1].strip().split("+")[0].strip()
+        key = _resolve_param_key(treatment_var, estimates["params"])
         return {
-            "effect_estimate": estimates["params"][treatment_var],
-            "ci_lower": estimates["conf_int"][treatment_var][0],
-            "ci_upper": estimates["conf_int"][treatment_var][1],
-            "p_value": estimates["pvalues"][treatment_var],
+            "effect_estimate": estimates["params"][key],
+            "ci_lower": estimates["conf_int"][key][0],
+            "ci_upper": estimates["conf_int"][key][1],
+            "p_value": estimates["pvalues"][key],
             "sample_size": int(summary["nobs"]),
         }
 

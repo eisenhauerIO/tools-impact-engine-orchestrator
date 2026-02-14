@@ -8,8 +8,7 @@
 strategy/index
 impact-loop/index
 pipeline/index
-tutorial/index
-architecture/index
+design
 development/index
 ecosystem/index
 api/index

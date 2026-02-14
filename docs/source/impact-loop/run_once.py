@@ -1,10 +1,12 @@
 """Run the Impact Engine Orchestrator once.
 
 Usage:
-    python scripts/run_once.py --config config.yaml
+    hatch run python docs/source/impact-loop/run_once.py
+    hatch run python docs/source/impact-loop/run_once.py --config path/to/config.yaml
 """
 
 import argparse
+from pathlib import Path
 
 from impact_engine_evaluate import Evaluate
 from portfolio_allocation import MinimaxRegretAllocate
@@ -44,8 +46,9 @@ def print_reports(result):
 
 
 def main():
+    default_config = Path(__file__).parent / "config.yaml"
     parser = argparse.ArgumentParser(description="Run Impact Engine Orchestrator once")
-    parser.add_argument("--config", type=str, required=True, help="Path to YAML config file")
+    parser.add_argument("--config", type=str, default=str(default_config), help="Path to YAML config file")
     args = parser.parse_args()
 
     config = load_config(args.config)

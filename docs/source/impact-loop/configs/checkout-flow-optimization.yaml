@@ -1,0 +1,27 @@
+DATA:
+  SOURCE:
+    type: simulator
+    CONFIG:
+      mode: rule
+      seed: 202
+      start_date: "2024-10-01"
+      end_date: "2024-12-31"
+      path: docs/source/impact-loop/data/checkout-flow-optimization/products.csv
+  ENRICHMENT:
+    FUNCTION: product_detail_boost
+    PARAMS:
+      enrichment_fraction: 0.1
+      enrichment_start: "2024-11-15"
+      quality_boost: 0.3
+      seed: 202
+  TRANSFORM:
+    FUNCTION: prepare_for_synthetic_control
+    PARAMS: {}
+MEASUREMENT:
+  MODEL: synthetic_control
+  PARAMS:
+    treatment_time: "2024-11-15"
+    treated_unit: BMJ3IYEKLP
+    outcome_column: revenue
+    unit_column: product_id
+    time_column: date

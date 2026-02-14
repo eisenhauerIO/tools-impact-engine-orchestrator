@@ -4,3 +4,7 @@ __pycache__/
 dist/
 .pytest_cache/
 docs/build/
+.ipynb_checkpoints/
+data/
+_external/
+.claude/
