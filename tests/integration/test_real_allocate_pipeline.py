@@ -1,7 +1,7 @@
 import pytest
+from impact_engine_evaluate import Evaluate
 from portfolio_allocation import MinimaxRegretAllocate
 
-from impact_engine_orchestrator.components.evaluate.mock import MockEvaluate
 from impact_engine_orchestrator.config import PipelineConfig
 from impact_engine_orchestrator.contracts.types import ModelType
 from impact_engine_orchestrator.orchestrator import Orchestrator
@@ -23,7 +23,7 @@ def _make_orchestrator(measure_env, budget=100000, initiative_specs=None):
     )
     return Orchestrator(
         measure=make_measure(initiatives),
-        evaluate=MockEvaluate(),
+        evaluate=Evaluate(),
         allocate=MinimaxRegretAllocate(),
         config=config,
     )

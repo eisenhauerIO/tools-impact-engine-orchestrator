@@ -6,6 +6,7 @@ dependencies = [
     "pyyaml",
     "portfolio-allocation @ git+https://github.com/eisenhauerIO/tools-impact-engine-allocate.git",
     "impact-engine @ git+https://github.com/eisenhauerIO/tools-impact-engine-measure.git",
+    "impact-engine-evaluate @ git+https://github.com/eisenhauerIO/tools-impact-engine-evaluate.git",
 ]
 
 [project.optional-dependencies]

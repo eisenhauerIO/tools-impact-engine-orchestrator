@@ -6,9 +6,9 @@ Usage:
 
 import argparse
 
+from impact_engine_evaluate import Evaluate
 from portfolio_allocation import MinimaxRegretAllocate
 
-from impact_engine_orchestrator.components.evaluate.mock import MockEvaluate
 from impact_engine_orchestrator.components.measure.measure import Measure
 from impact_engine_orchestrator.config import load_config
 from impact_engine_orchestrator.orchestrator import Orchestrator
@@ -57,7 +57,7 @@ def main():
 
     orchestrator = Orchestrator(
         measure=measure,
-        evaluate=MockEvaluate(),
+        evaluate=Evaluate(),
         allocate=MinimaxRegretAllocate(),
         config=config,
     )

@@ -37,7 +37,7 @@ impact_engine_orchestrator/
     ├── measure/
     │   └── measure.py      # Measure (wraps impact_engine)
     ├── evaluate/
-    │   └── mock.py         # MockEvaluate
+    │   └── __init__.py     # Namespace (Evaluate from impact_engine_evaluate)
     └── allocate/
         └── mock.py         # MockAllocate
 tests/
@@ -54,23 +54,11 @@ scripts/
 | Component | Status | Implementation |
 |-----------|--------|----------------|
 | MEASURE | Integrated | **REAL** (`impact-engine` via pip from GitHub) |
-| EVALUATE | Needs integration | **MOCK** (confidence scoring) |
+| EVALUATE | Integrated | **REAL** (`impact-engine-evaluate` via pip from GitHub) |
 | ALLOCATE | Integrated | **REAL** (`portfolio-allocation` via pip from GitHub) |
 | Orchestrator | Implemented | **REAL** (wires everything together) |
 
 ## Mock Components
-
-### MockEvaluate
-
-Confidence scoring by model type:
-
-| Model Type | Confidence Range |
-|------------|------------------|
-| Experiment | 0.85 -- 1.00 |
-| Quasi-experiment | 0.60 -- 0.84 |
-| Time-series / ITS | 0.40 -- 0.59 |
-| Observational / Metrics Approx | 0.20 -- 0.39 |
-| Synthetic Control / Matching / Subclass | 0.60 -- 0.84 |
 
 ### MockAllocate
 
@@ -101,6 +89,6 @@ Scores initiatives by `confidence * R_med`, selects greedily until budget is exh
 | ~~1~~ | ~~All Mocks~~ | ~~End-to-end flow works, deterministic~~ |
 | ~~2~~ | ~~Real MEASURE~~ | ~~Done — `Measure` adapter wrapping `impact_engine`~~ |
 | ~~3~~ | ~~Real ALLOCATE~~ | ~~Done — `MinimaxRegretAllocate` from `portfolio-allocation`~~ |
-| 4 | Real EVALUATE | Build confidence scoring (when designed) |
+| ~~4~~ | ~~Real EVALUATE~~ | ~~Done — `Evaluate` from `impact-engine-evaluate`~~ |
 
 Each swap is a single line change in the orchestrator constructor.
