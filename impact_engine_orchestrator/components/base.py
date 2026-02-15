@@ -7,7 +7,9 @@ from typing import Protocol
 class PipelineComponentProtocol(Protocol):
     """Structural interface for pipeline stage components."""
 
-    def execute(self, event: dict) -> dict: ...
+    def execute(self, event: dict) -> dict:
+        """Process event and return result."""
+        ...
 
 
 class PipelineComponent(ABC):
