@@ -186,6 +186,26 @@ right file without exploration. It also means you can give a single instruction 
 "update the component to handle the new `diagnostics_version` field" and Claude will
 know exactly where to look in any repo.
 
+### Canonical Configuration Reference
+
+| Aspect | Canonical Value |
+|--------|----------------|
+| Build backend | `hatchling` |
+| Python | `>=3.10` |
+| Formatter | ruff format only (no black) |
+| Line length | `120` |
+| Ruff select | `["D", "E", "F", "I"]` |
+| Docstring convention | `numpy` |
+| Hatch default env | `features = ["dev"]` |
+| Hatch scripts | `test`, `lint`, `format` |
+| Hatch docs env | separate `docs` env |
+| CI file | `.github/workflows/ci.yaml` |
+| CI matrix | Python 3.10, 3.11, 3.12 |
+| Docs path | `docs/source/` -> `docs/build/html` |
+| Docs theme | sphinx-rtd-theme + myst-parser + nbsphinx |
+| Pre-commit | nbstripout, pre-commit-hooks, ruff, local pytest |
+| CLAUDE.md sections | Environment, Architecture, Key Conventions |
+
 ---
 
 ## 4. Dependency Graph and Change Protocols
@@ -316,6 +336,86 @@ enforcement every time any developer (human or AI) touches any repo.
 
 ---
 
+## 8. Claude Code Skills & Subagents
+
+The standards above are enforced via shared skills and subagents in
+`utils-agentic-support`, synced to each package's `.claude/` directory.
+
+### New Skills
+
+#### `audit-ecosystem` — `/audit-ecosystem`
+
+Audits all packages against canonical patterns (Section 3) and reports deviations.
+
+Checks:
+- `pyproject.toml`: build-backend, ruff config, hatch env names/scripts, Python version
+- `.pre-commit-config.yaml`: required hooks (nbstripout, pre-commit-hooks, ruff, local pytest)
+- `.github/workflows/`: ci.yaml + docs.yaml presence, Python matrix, hatch usage
+- `CLAUDE.md`: existence, required sections (Environment, Architecture, Key Conventions)
+- `.claude/`: skills/ symlinks, settings.local.json
+- Docs: `docs/source/conf.py` existence, theme, extensions
+- Package structure: adapter.py presence, tests/ directory, `__init__.py` exports
+
+Output: markdown report grouped by package, listing deviations from canonical.
+
+#### `sync-package-setup` — `/sync-package-setup [aspect]`
+
+Synchronizes a specific config aspect across all (or selected) packages.
+
+| Aspect | What it aligns |
+|--------|---------------|
+| `ruff` | `[tool.ruff]` section in pyproject.toml |
+| `pre-commit` | `.pre-commit-config.yaml` |
+| `ci` | `.github/workflows/ci.yaml` |
+| `docs-ci` | `.github/workflows/docs.yaml` |
+| `claude` | `.claude/` directory with skills symlinks + settings |
+| `claude-md` | CLAUDE.md standard sections |
+
+Workflow: Read canonical template -> read target file -> show diff -> apply per package.
+
+#### `scaffold-package` — `/scaffold-package [package-name]`
+
+Bootstraps a new impact-engine package with canonical structure:
+pyproject.toml, package dir, adapter.py, tests/, .pre-commit-config.yaml,
+CI workflows, CLAUDE.md, .claude/, docs/source/, .gitignore, README.md.
+
+### New Subagent
+
+#### `ecosystem-reviewer`
+
+**Model:** opus | Reviews a change for cross-ecosystem consistency.
+
+Checks:
+- Contract compatibility: does a dataclass/adapter change break consumers?
+- Adapter pattern conformance: pure logic separated from orchestrator integration?
+- Naming conventions: consistent field names across boundaries (`initiative_id` not `id`)
+- Public API surface: clean `__init__.py` exports?
+- Config handling: YAML-only, no inline defaults?
+
+### New Feature-Types (for `/add-feature`)
+
+#### `adapter`
+
+Scaffolds a new orchestrator integration point in any package:
+pure logic module + adapter.py + contract dataclass + tests + registry entry.
+
+#### `component`
+
+Scaffolds a new pipeline component in the orchestrator:
+component dir under `components/`, PipelineComponent subclass, contract under `contracts/`,
+registry entry, integration test.
+
+### Files to Create in `utils-agentic-support`
+
+- `claude/skills/audit-ecosystem/SKILL.md`
+- `claude/skills/sync-package-setup/SKILL.md`
+- `claude/skills/scaffold-package/SKILL.md`
+- `claude/subagents/ecosystem-reviewer.md`
+- `claude/skills/add-feature/feature-types/adapter.md`
+- `claude/skills/add-feature/feature-types/component.md`
+
+---
+
 ## Priority Order
 
 | # | Action | Impact | Effort |
@@ -326,3 +426,8 @@ enforcement every time any developer (human or AI) touches any repo.
 | 4 | Add schema version checking | Closes the highest-risk evolution vector | Low |
 | 5 | Add ecosystem integration CI | Catches cross-repo breakage before users | Low |
 | 6 | Document dependency graph and change protocols in `CLAUDE.md` | Prevents AI from violating dependency direction | Low |
+| 7 | Create `audit-ecosystem` skill | Baseline assessment of all deviations | Low |
+| 8 | Create `sync-package-setup` skill | Fix deviations aspect-by-aspect | Medium |
+| 9 | Create `ecosystem-reviewer` subagent | Prevent future drift during development | Medium |
+| 10 | Create `adapter` + `component` feature-types | Standardize new code scaffolding | Low |
+| 11 | Create `scaffold-package` skill | Enable future package creation | Low |
