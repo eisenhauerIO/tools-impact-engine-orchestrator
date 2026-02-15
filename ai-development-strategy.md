@@ -416,6 +416,98 @@ registry entry, integration test.
 
 ---
 
+## 9. Workspace Repository
+
+A wrapper repo (`impact-engine` or `impact-engine-workspace`) serves as the single command
+center for ecosystem-wide development. It replaces the orchestrator's `_external/` pattern
+with a first-class workspace that Claude Code can open to see everything at once.
+
+### Structure
+
+```
+impact-engine/
+├── CLAUDE.md                         # Ecosystem constitution (Section 1 shared conventions)
+├── .claude/                          # Skills, subagents, settings (single sync point)
+├── ai-development-strategy.md        # This document
+├── setup.sh                          # Idempotent clone/pull script
+├── .gitignore                        # Ignores all cloned repos
+│
+├── orchestrator/                     # clone of tools-impact-engine-orchestrator
+├── measure/                          # clone of tools-impact-engine-measure
+├── evaluate/                         # clone of tools-impact-engine-evaluate
+├── allocate/                         # clone of tools-impact-engine-allocate
+├── catalog-generator/                # clone of tools-catalog-generator
+├── contracts/                        # clone of tools-impact-engine-contracts (when created)
+└── agentic-support/                  # clone of utils-agentic-support
+```
+
+### Clone Script (`setup.sh`)
+
+Idempotent: clones if missing, pulls if exists. No git submodules.
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+GITHUB="https://github.com/eisenhauerIO"
+
+repos=(
+  "tools-impact-engine-orchestrator:orchestrator"
+  "tools-impact-engine-measure:measure"
+  "tools-impact-engine-evaluate:evaluate"
+  "tools-impact-engine-allocate:allocate"
+  "tools-catalog-generator:catalog-generator"
+  "utils-agentic-support:agentic-support"
+)
+
+for entry in "${repos[@]}"; do
+  repo="${entry%%:*}"
+  dir="${entry##*:}"
+  if [ -d "$dir" ]; then
+    echo "Updating $dir..."
+    git -C "$dir" pull --ff-only
+  else
+    echo "Cloning $repo -> $dir..."
+    git clone "$GITHUB/$repo.git" "$dir"
+  fi
+done
+
+echo "Done. All repos are up to date."
+```
+
+### What Changes
+
+| Before (current) | After (workspace) |
+|-------------------|-------------------|
+| Orchestrator owns `_external/` with all repos | Wrapper repo owns all repos as siblings |
+| Each repo syncs its own `.claude/` from cache | Wrapper `.claude/` is the single source |
+| `CLAUDE.md` shared section duplicated per repo | Top-level `CLAUDE.md` = shared section; sub-repos only keep repo-specific extensions |
+| Cross-repo skills reference hardcoded `_external/` paths | Skills walk sibling directories (`../measure/`, `../evaluate/`) |
+| Opening one repo = one context | Opening wrapper = full ecosystem context |
+
+### What the Wrapper Repo Tracks (in git)
+
+Only its own files — the cloned repos are `.gitignore`d:
+
+- `CLAUDE.md`
+- `.claude/` (skills, subagents, settings)
+- `ai-development-strategy.md`
+- `setup.sh`
+- `.gitignore`
+- `README.md`
+
+### Migration Path
+
+1. Create the wrapper repo on GitHub
+2. Add `setup.sh` and `.gitignore`
+3. Move ecosystem `CLAUDE.md` content from orchestrator to wrapper
+4. Move `ai-development-strategy.md` from orchestrator to wrapper
+5. Run `/sync` to set up `.claude/` in the wrapper
+6. Remove `_external/` from the orchestrator (replaced by workspace siblings)
+7. Update orchestrator's `pyproject.toml` dependency paths if needed
+
+---
+
 ## Priority Order
 
 | # | Action | Impact | Effort |
@@ -431,3 +523,4 @@ registry entry, integration test.
 | 9 | Create `ecosystem-reviewer` subagent | Prevent future drift during development | Medium |
 | 10 | Create `adapter` + `component` feature-types | Standardize new code scaffolding | Low |
 | 11 | Create `scaffold-package` skill | Enable future package creation | Low |
+| 12 | Create workspace wrapper repo | Single command center for ecosystem development | Low |
