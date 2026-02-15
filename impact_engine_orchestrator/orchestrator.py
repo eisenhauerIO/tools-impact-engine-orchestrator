@@ -5,7 +5,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 
-from impact_engine_orchestrator.components.base import PipelineComponent
+from impact_engine_orchestrator.components.base import PipelineComponentProtocol
 from impact_engine_orchestrator.config import PipelineConfig
 from impact_engine_orchestrator.contracts.report import OutcomeReport
 
@@ -15,9 +15,9 @@ class Orchestrator:
 
     def __init__(
         self,
-        measure: PipelineComponent,
-        evaluate: PipelineComponent,
-        allocate: PipelineComponent,
+        measure: PipelineComponentProtocol,
+        evaluate: PipelineComponentProtocol,
+        allocate: PipelineComponentProtocol,
         config: PipelineConfig,
     ):
         self.measure = measure

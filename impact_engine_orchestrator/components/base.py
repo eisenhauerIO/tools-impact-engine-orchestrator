@@ -1,6 +1,13 @@
-"""Abstract base class for pipeline components."""
+"""Abstract base class and protocol for pipeline components."""
 
 from abc import ABC, abstractmethod
+from typing import Protocol
+
+
+class PipelineComponentProtocol(Protocol):
+    """Structural interface for pipeline stage components."""
+
+    def execute(self, event: dict) -> dict: ...
 
 
 class PipelineComponent(ABC):

@@ -1,12 +1,5 @@
-"""Contract for ALLOCATE stage output."""
+"""Contract for ALLOCATE stage output — re-exported from the allocate package."""
 
-from dataclasses import dataclass
+from impact_engine_allocate import AllocateResult
 
-
-@dataclass
-class AllocateResult:
-    """Portfolio selection with budget allocation."""
-
-    selected_initiatives: list[str]
-    predicted_returns: dict[str, float]
-    budget_allocated: dict[str, float]
+__all__ = ["AllocateResult"]

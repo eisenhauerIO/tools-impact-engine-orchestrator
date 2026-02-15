@@ -4,11 +4,11 @@ from impact_engine_allocate import MinimaxRegretAllocate
 from impact_engine_evaluate import Evaluate
 
 from impact_engine_orchestrator.components.allocate.mock import MockAllocate
-from impact_engine_orchestrator.components.base import PipelineComponent
+from impact_engine_orchestrator.components.base import PipelineComponentProtocol
 from impact_engine_orchestrator.components.measure.measure import Measure
 from impact_engine_orchestrator.config import StageConfig
 
-COMPONENT_REGISTRY: dict[str, type[PipelineComponent]] = {
+COMPONENT_REGISTRY: dict[str, type[PipelineComponentProtocol]] = {
     "Measure": Measure,
     "MockAllocate": MockAllocate,
     "Evaluate": Evaluate,
@@ -16,7 +16,7 @@ COMPONENT_REGISTRY: dict[str, type[PipelineComponent]] = {
 }
 
 
-def build(stage_config: StageConfig) -> PipelineComponent:
+def build(stage_config: StageConfig) -> PipelineComponentProtocol:
     """Construct a component from a StageConfig."""
     name = stage_config.component
     if name not in COMPONENT_REGISTRY:
