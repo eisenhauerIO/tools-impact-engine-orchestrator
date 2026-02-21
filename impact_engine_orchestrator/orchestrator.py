@@ -9,6 +9,45 @@ from impact_engine_orchestrator.components.base import PipelineComponentProtocol
 from impact_engine_orchestrator.config import PipelineConfig
 from impact_engine_orchestrator.contracts.report import OutcomeReport
 
+_MEASURE_REQUIRED_KEYS = frozenset(
+    {
+        "initiative_id",
+        "effect_estimate",
+        "ci_lower",
+        "ci_upper",
+        "p_value",
+        "sample_size",
+        "model_type",
+        "diagnostics",
+    }
+)
+_EVALUATE_REQUIRED_KEYS = frozenset(
+    {
+        "initiative_id",
+        "confidence",
+        "cost",
+        "return_best",
+        "return_median",
+        "return_worst",
+        "model_type",
+        "sample_size",
+    }
+)
+_ALLOCATE_REQUIRED_KEYS = frozenset(
+    {
+        "selected_initiatives",
+        "predicted_returns",
+        "budget_allocated",
+    }
+)
+
+
+def _validate_stage_output(stage: str, result: dict, required_keys: frozenset[str]) -> None:
+    """Raise if required keys are missing from a stage output dict."""
+    missing = required_keys - result.keys()
+    if missing:
+        raise ValueError(f"{stage} output missing required keys: {sorted(missing)}")
+
 
 class Orchestrator:
     """Run the full MEASURE-EVALUATE-ALLOCATE-SCALE pipeline."""
@@ -51,10 +90,14 @@ class Orchestrator:
                 {"initiative_id": i.initiative_id, "measure_config": i.measure_config} for i in initiatives
             ]
             pilot_results = self._fan_out(self.measure, measure_inputs, pool)
+            for r in pilot_results:
+                _validate_stage_output("MEASURE", r, _MEASURE_REQUIRED_KEYS)
 
             # 2. EVALUATE - parallel (enrich with cost_to_scale from config)
             eval_inputs = [{**result, "cost_to_scale": cost_by_id[result["initiative_id"]]} for result in pilot_results]
             eval_results = self._fan_out(self.evaluate, eval_inputs, pool)
+            for r in eval_results:
+                _validate_stage_output("EVALUATE", r, _EVALUATE_REQUIRED_KEYS)
 
             # 3. ALLOCATE - single (budget from config)
             alloc_result = self.allocate.execute(
@@ -63,6 +106,7 @@ class Orchestrator:
                     "budget": self.config.budget,
                 }
             )
+            _validate_stage_output("ALLOCATE", alloc_result, _ALLOCATE_REQUIRED_KEYS)
 
             # 4. MEASURE (scale) - parallel on selected only (enrich with measure_config)
             selected_ids = alloc_result["selected_initiatives"]
@@ -75,6 +119,8 @@ class Orchestrator:
                 for iid in selected_ids
             ]
             scale_results = self._fan_out(self.measure, scale_inputs, pool)
+            for r in scale_results:
+                _validate_stage_output("MEASURE", r, _MEASURE_REQUIRED_KEYS)
 
         # 5. Generate outcome reports
         reports = self._generate_reports(pilot_results, eval_results, alloc_result, scale_results)

@@ -84,3 +84,26 @@ def test_single_initiative(measure_env):
     assert len(result["pilot_results"]) == 1
     assert len(result["outcome_reports"]) == 1
     assert result["outcome_reports"][0]["initiative_id"] == "only-one"
+
+
+class _IncompleteMeasure:
+    """Mock that returns a dict missing required keys."""
+
+    def execute(self, event: dict) -> dict:
+        return {"initiative_id": event["initiative_id"]}
+
+
+def test_missing_keys_raises(measure_env):
+    """Validation catches incomplete stage output with a clear message."""
+    make_initiative, _ = measure_env
+    initiatives = [make_initiative("bad-init", 5000)]
+    config = PipelineConfig(budget=100000, scale_sample_size=5000, initiatives=initiatives)
+    orchestrator = Orchestrator(
+        measure=_IncompleteMeasure(),
+        evaluate=Evaluate(),
+        allocate=MockAllocate(),
+        config=config,
+    )
+
+    with pytest.raises(ValueError, match="MEASURE output missing required keys"):
+        orchestrator.run()

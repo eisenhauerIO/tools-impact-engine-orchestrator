@@ -25,6 +25,11 @@ packages = ["impact_engine_orchestrator"]
 [tool.hatch.envs.default]
 features = ["dev"]
 
+[tool.hatch.envs.default.scripts]
+test = "pytest -v"
+lint = "ruff check ."
+format = "ruff format ."
+
 [tool.hatch.envs.docs]
 dependencies = [
     "sphinx>=7.0",
