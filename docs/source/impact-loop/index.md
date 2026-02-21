@@ -95,3 +95,10 @@ Five design principles cut across all packages in the ecosystem:
 The impact loop's value compounds over time. Initiatives that were dropped — because the budget ran out or the measurement confidence was too low — can be re-studied with more rigorous methodologies and re-enter the next cycle. Initiatives that were funded provide ground-truth outcomes that sharpen future confidence scoring. New initiatives enter alongside returning ones.
 
 Each cycle produces better measurements, better-calibrated confidence scores, and better allocation decisions. That is the point of the loop: not a one-shot analysis, but a learning system that improves with every iteration.
+
+```{toctree}
+:maxdepth: 1
+:caption: Hands-on
+
+tutorial
+```
