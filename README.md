@@ -16,43 +16,4 @@ Running a single causal study is hard enough. Running a portfolio of pilots — 
   <img src="docs/source/_static/overview.svg" alt="Impact Engine Orchestrator Overview">
 </p>
 
-## Quick Start
-
-```bash
-pip install git+https://github.com/eisenhauerIO/tools-impact-engine-orchestrator.git
-```
-
-```python
-from impact_engine_orchestrator.config import load_config
-from impact_engine_orchestrator.orchestrator import Orchestrator
-
-config = load_config("pipeline.yaml")
-orchestrator = Orchestrator.from_config(config)
-results = orchestrator.run()
-```
-
-## Documentation
-
-| Guide | Description |
-|-------|-------------|
-| [Pipeline](https://eisenhauerio.github.io/tools-impact-engine-orchestrator/pipeline/index.html) | Stage descriptions and data flow contracts |
-| [Development](https://eisenhauerio.github.io/tools-impact-engine-orchestrator/development/index.html) | Quick start, project structure, configuration |
-| [API Reference](https://eisenhauerio.github.io/tools-impact-engine-orchestrator/api/index.html) | Auto-generated class and function documentation |
-
-## Component Repositories
-
-| Component | Repository |
-|-----------|------------|
-| **MEASURE** | [tools-impact-engine-measure](https://github.com/eisenhauerIO/tools-impact-engine-measure) |
-| **EVALUATE** | [tools-impact-engine-evaluate](https://github.com/eisenhauerIO/tools-impact-engine-evaluate) |
-| **ALLOCATE** | [tools-impact-engine-allocate](https://github.com/eisenhauerIO/tools-impact-engine-allocate) |
-| **SIMULATE** | [tools-catalog-generator](https://github.com/eisenhauerIO/tools-catalog-generator) |
-
-## Development
-
-```bash
-hatch run test        # Run tests
-hatch run lint        # Run linter
-hatch run format      # Format code
-hatch run docs:build  # Build documentation
-```
+[Documentation](https://eisenhauerio.github.io/tools-impact-engine-orchestrator/)
