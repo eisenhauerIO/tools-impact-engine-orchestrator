@@ -25,9 +25,7 @@ jobs:
         run: pip install hatch
 
       - name: Lint
-        run: |
-          hatch run ruff check .
-          hatch run ruff format --check .
+        run: hatch run lint
 
       - name: Run tests and notebooks
-        run: hatch run pytest
+        run: hatch run test
