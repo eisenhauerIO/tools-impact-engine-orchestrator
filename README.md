@@ -16,4 +16,4 @@ Running a single causal study is hard enough. Running a portfolio of pilots — 
   <img src="docs/source/_static/overview.svg" alt="Impact Engine Orchestrator Overview">
 </p>
 
-[Documentation](https://eisenhauerio.github.io/tools-impact-engine-orchestrator/)
+Visit our [documentation](https://eisenhauerio.github.io/tools-impact-engine-orchestrator/) for details.
