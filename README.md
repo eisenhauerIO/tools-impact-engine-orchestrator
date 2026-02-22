@@ -36,8 +36,8 @@ results = orchestrator.run()
 | Guide | Description |
 |-------|-------------|
 | [Pipeline](https://eisenhauerio.github.io/tools-impact-engine-orchestrator/pipeline/index.html) | Stage descriptions and data flow contracts |
-| [Architecture](https://eisenhauerio.github.io/tools-impact-engine-orchestrator/architecture/index.html) | Execution model and design decisions |
-| [Design](https://eisenhauerio.github.io/tools-impact-engine-orchestrator/design.html) | System design document |
+| [Development](https://eisenhauerio.github.io/tools-impact-engine-orchestrator/development/index.html) | Quick start, project structure, configuration |
+| [API Reference](https://eisenhauerio.github.io/tools-impact-engine-orchestrator/api/index.html) | Auto-generated class and function documentation |
 
 ## Component Repositories
 
