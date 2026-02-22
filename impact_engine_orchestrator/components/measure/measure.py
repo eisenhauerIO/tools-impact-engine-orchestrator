@@ -1,9 +1,8 @@
 """MEASURE adapter wrapping impact_engine_measure.evaluate_impact."""
 
-import json
 from dataclasses import asdict
 
-from impact_engine_measure import evaluate_impact
+from impact_engine_measure import evaluate_impact, load_results
 
 from impact_engine_orchestrator.components.base import PipelineComponent
 from impact_engine_orchestrator.contracts.measure import MeasureResult
@@ -109,14 +108,12 @@ class Measure(PipelineComponent):
         initiative_id = event["initiative_id"]
         config_path = event["measure_config"]
 
-        result_path = evaluate_impact(
+        job_info = evaluate_impact(
             config_path=config_path,
             storage_url=self._storage_url,
             job_id=initiative_id,
         )
-
-        with open(result_path) as f:
-            result = json.load(f)
+        result = load_results(job_info).impact_results
 
         extracted = _extract_estimates(result)
 
