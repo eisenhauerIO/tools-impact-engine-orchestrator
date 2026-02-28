@@ -16,12 +16,13 @@ def measure_env(tmp_path):
     - make_initiative(id, cost) creates an InitiativeConfig with a working measure config
     - make_measure() creates a Measure adapter wired to the temp storage
     """
+    n = 50
     products_df = pd.DataFrame(
         {
-            "product_id": [f"prod_{i:03d}" for i in range(5)],
-            "name": [f"Product {i}" for i in range(5)],
-            "category": ["Electronics"] * 5,
-            "price": [99.99, 149.99, 79.99, 59.99, 199.99],
+            "product_id": [f"prod_{i:03d}" for i in range(n)],
+            "name": [f"Product {i}" for i in range(n)],
+            "category": ["Electronics"] * n,
+            "price": [round(50 + (i * 3.5) % 200, 2) for i in range(n)],
         }
     )
     products_path = tmp_path / "products.csv"
@@ -40,20 +41,24 @@ def measure_env(tmp_path):
                             "path": str(products_path),
                             "mode": "rule",
                             "seed": 42,
-                            "start_date": "2024-01-01",
-                            "end_date": "2024-01-31",
+                            "start_date": "2024-01-08",
+                            "end_date": "2024-01-08",
                         },
                     },
-                    "TRANSFORM": {
-                        "FUNCTION": "aggregate_by_date",
-                        "PARAMS": {"metric": "revenue"},
+                    "ENRICHMENT": {
+                        "FUNCTION": "product_detail_boost",
+                        "PARAMS": {
+                            "enrichment_fraction": 0.5,
+                            "enrichment_start": "2024-01-08",
+                            "quality_boost": 0.15,
+                            "seed": 42,
+                        },
                     },
                 },
                 "MEASUREMENT": {
-                    "MODEL": "interrupted_time_series",
+                    "MODEL": "experiment",
                     "PARAMS": {
-                        "dependent_variable": "revenue",
-                        "intervention_date": "2024-01-15",
+                        "formula": "revenue ~ enriched + price",
                     },
                 },
             }

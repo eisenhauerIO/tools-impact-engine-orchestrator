@@ -24,7 +24,7 @@ def _make_orchestrator(measure_env, budget=100000, initiative_specs=None):
     return Orchestrator(
         measure=make_measure(),
         evaluate=Evaluate(),
-        allocate=MinimaxRegretAllocate(),
+        allocate=MinimaxRegretAllocate(min_portfolio_worst_return=-1e9),
         config=config,
     )
 
