@@ -112,7 +112,7 @@ class Measure(PipelineComponent):
         evaluate_strategy = event.get("evaluate_strategy", "score")
 
         job_info = evaluate_impact(
-            config=config_path,
+            config_path=config_path,
             storage_url=self._storage_url,
             job_id=initiative_id,
         )
