@@ -1,18 +1,17 @@
 """Component registry mapping short names to class objects."""
 
-from impact_engine_allocate import MinimaxRegretAllocate
-from impact_engine_evaluate import Evaluate
-
+from impact_engine_orchestrator.components.allocate.allocate import AllocateComponent
 from impact_engine_orchestrator.components.allocate.mock import MockAllocate
 from impact_engine_orchestrator.components.base import PipelineComponentProtocol
+from impact_engine_orchestrator.components.evaluate.evaluate import Evaluate
 from impact_engine_orchestrator.components.measure.measure import Measure
 from impact_engine_orchestrator.config import StageConfig
 
 COMPONENT_REGISTRY: dict[str, type[PipelineComponentProtocol]] = {
     "Measure": Measure,
-    "MockAllocate": MockAllocate,
     "Evaluate": Evaluate,
-    "MinimaxRegretAllocate": MinimaxRegretAllocate,
+    "MinimaxRegretAllocate": AllocateComponent,  # key preserved for config compatibility
+    "MockAllocate": MockAllocate,
 }
 
 

@@ -1,7 +1,7 @@
 import pytest
-from impact_engine_evaluate import Evaluate
 
 from impact_engine_orchestrator.components.allocate.mock import MockAllocate
+from impact_engine_orchestrator.components.evaluate.evaluate import Evaluate
 from impact_engine_orchestrator.config import PipelineConfig
 from impact_engine_orchestrator.contracts.types import ModelType
 from impact_engine_orchestrator.orchestrator import Orchestrator

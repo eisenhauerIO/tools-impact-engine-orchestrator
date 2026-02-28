@@ -26,7 +26,7 @@ def test_build_measure():
 
 def test_build_evaluate():
     """Registry builds Evaluate."""
-    from impact_engine_evaluate import Evaluate
+    from impact_engine_orchestrator.components.evaluate.evaluate import Evaluate
 
     stage = StageConfig(component="Evaluate")
     component = build(stage)
@@ -43,12 +43,12 @@ def test_build_mock_allocate():
 
 
 def test_build_minimax_regret_allocate():
-    """Registry builds MinimaxRegretAllocate."""
-    from impact_engine_allocate import MinimaxRegretAllocate
+    """Registry builds MinimaxRegretAllocate (AllocateComponent) via config key."""
+    from impact_engine_orchestrator.components.allocate.allocate import AllocateComponent
 
     stage = StageConfig(component="MinimaxRegretAllocate")
     component = build(stage)
-    assert isinstance(component, MinimaxRegretAllocate)
+    assert isinstance(component, AllocateComponent)
 
 
 def test_missing_stage_config_file():
@@ -99,9 +99,8 @@ def test_from_config_round_trip(tmp_path):
 
 def test_from_config_with_real_components(tmp_path):
     """Load config with Measure + Evaluate + MinimaxRegretAllocate → verify types."""
-    from impact_engine_allocate import MinimaxRegretAllocate
-    from impact_engine_evaluate import Evaluate
-
+    from impact_engine_orchestrator.components.allocate.allocate import AllocateComponent
+    from impact_engine_orchestrator.components.evaluate.evaluate import Evaluate
     from impact_engine_orchestrator.components.measure.measure import Measure
 
     measure_cfg = tmp_path / "measure.yaml"
@@ -134,4 +133,4 @@ def test_from_config_with_real_components(tmp_path):
 
     assert isinstance(orchestrator.measure, Measure)
     assert isinstance(orchestrator.evaluate, Evaluate)
-    assert isinstance(orchestrator.allocate, MinimaxRegretAllocate)
+    assert isinstance(orchestrator.allocate, AllocateComponent)

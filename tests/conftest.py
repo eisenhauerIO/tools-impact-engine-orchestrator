@@ -1,4 +1,4 @@
-"""Shared fixtures for integration tests with real Measure."""
+"""Shared fixtures for orchestrator tests."""
 
 import pandas as pd
 import pytest
@@ -77,3 +77,21 @@ def measure_env(tmp_path):
         return Measure(storage_url=storage_url)
 
     return make_initiative, make_measure
+
+
+@pytest.fixture()
+def sample_initiatives():
+    """Standard set of initiatives for allocate testing (orchestrator field names)."""
+    return [
+        {"initiative_id": "A", "cost": 4, "return_best": 15, "return_median": 10, "return_worst": 2, "confidence": 0.9},
+        {"initiative_id": "B", "cost": 3, "return_best": 12, "return_median": 8, "return_worst": 1, "confidence": 0.6},
+        {"initiative_id": "C", "cost": 3, "return_best": 9, "return_median": 6, "return_worst": 2, "confidence": 0.8},
+        {"initiative_id": "D", "cost": 2, "return_best": 7, "return_median": 5, "return_worst": 3, "confidence": 0.4},
+        {"initiative_id": "E", "cost": 5, "return_best": 18, "return_median": 9, "return_worst": 0, "confidence": 0.5},
+    ]
+
+
+@pytest.fixture()
+def sample_event(sample_initiatives):
+    """Orchestrator-shaped allocate event."""
+    return {"initiatives": sample_initiatives, "budget": 10}
