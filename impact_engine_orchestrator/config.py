@@ -13,6 +13,7 @@ class InitiativeConfig:
     initiative_id: str
     cost_to_scale: float
     measure_config: str = ""
+    evaluate_strategy: str = "score"
 
 
 @dataclass

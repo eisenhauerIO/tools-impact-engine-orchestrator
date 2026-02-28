@@ -85,17 +85,38 @@ class Orchestrator:
         config_by_id = {i.initiative_id: i.measure_config for i in initiatives}
 
         with ThreadPoolExecutor(max_workers=self.config.max_workers) as pool:
-            # 1. MEASURE (pilot) - parallel (enrich with measure_config)
+            # 1. MEASURE (pilot) - parallel (enrich with measure_config and evaluate_strategy)
             measure_inputs = [
-                {"initiative_id": i.initiative_id, "measure_config": i.measure_config} for i in initiatives
+                {
+                    "initiative_id": i.initiative_id,
+                    "measure_config": i.measure_config,
+                    "evaluate_strategy": i.evaluate_strategy,
+                }
+                for i in initiatives
             ]
             pilot_results = self._fan_out(self.measure, measure_inputs, pool)
             for r in pilot_results:
                 _validate_stage_output("MEASURE", r, _MEASURE_REQUIRED_KEYS)
 
-            # 2. EVALUATE - parallel (enrich with cost_to_scale from config)
+            # 2. EVALUATE - parallel (pilot results carry job_dir; enrich with cost_to_scale)
             eval_inputs = [{**result, "cost_to_scale": cost_by_id[result["initiative_id"]]} for result in pilot_results]
-            eval_results = self._fan_out(self.evaluate, eval_inputs, pool)
+            eval_results_raw = self._fan_out(self.evaluate, eval_inputs, pool)
+
+            # Merge evaluate output with return scenarios and other allocate-required fields
+            # drawn from the pilot measure results.
+            pilot_by_id = {p["initiative_id"]: p for p in pilot_results}
+            eval_results = [
+                {
+                    **raw,
+                    "cost": cost_by_id[raw["initiative_id"]],
+                    "return_best": pilot_by_id[raw["initiative_id"]]["ci_upper"],
+                    "return_median": pilot_by_id[raw["initiative_id"]]["effect_estimate"],
+                    "return_worst": pilot_by_id[raw["initiative_id"]]["ci_lower"],
+                    "model_type": pilot_by_id[raw["initiative_id"]]["model_type"],
+                    "sample_size": pilot_by_id[raw["initiative_id"]]["sample_size"],
+                }
+                for raw in eval_results_raw
+            ]
             for r in eval_results:
                 _validate_stage_output("EVALUATE", r, _EVALUATE_REQUIRED_KEYS)
 

@@ -1,6 +1,8 @@
 """MEASURE adapter wrapping impact_engine_measure.evaluate_impact."""
 
+import json
 from dataclasses import asdict
+from pathlib import Path
 
 from impact_engine_measure import evaluate_impact, load_results
 
@@ -107,12 +109,21 @@ class Measure(PipelineComponent):
         """Run evaluate_impact for one initiative and return a MeasureResult dict."""
         initiative_id = event["initiative_id"]
         config_path = event["measure_config"]
+        evaluate_strategy = event.get("evaluate_strategy", "score")
 
         job_info = evaluate_impact(
-            config_path=config_path,
+            config=config_path,
             storage_url=self._storage_url,
             job_id=initiative_id,
         )
+
+        # Write evaluate_strategy into the manifest so the evaluate stage can read it.
+        job_dir = Path(job_info.full_path)
+        manifest_path = job_dir / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["evaluate_strategy"] = evaluate_strategy
+        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
         result = load_results(job_info).impact_results
 
         extracted = _extract_estimates(result)
@@ -127,4 +138,6 @@ class Measure(PipelineComponent):
             model_type=ModelType(result["model_type"]),
             diagnostics=result["data"]["model_summary"],
         )
-        return asdict(measure_result)
+        result_dict = asdict(measure_result)
+        result_dict["job_dir"] = str(job_dir)
+        return result_dict
