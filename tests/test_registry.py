@@ -3,24 +3,22 @@
 import pytest
 import yaml
 
-from impact_engine_orchestrator.config import StageConfig, load_config
+from impact_engine_orchestrator.config import load_config
 from impact_engine_orchestrator.orchestrator import Orchestrator
 from impact_engine_orchestrator.registry import build
 
 
 def test_build_unknown_component():
     """Unknown component name raises a clear error."""
-    stage = StageConfig(component="DoesNotExist")
     with pytest.raises(KeyError, match="Unknown component 'DoesNotExist'"):
-        build(stage)
+        build({"component": "DoesNotExist"})
 
 
 def test_build_measure():
     """Registry builds Measure with kwargs."""
     from impact_engine_orchestrator.components.measure.measure import Measure
 
-    stage = StageConfig(component="Measure", kwargs={"storage_url": "/tmp/test"})
-    component = build(stage)
+    component = build({"component": "Measure", "kwargs": {"storage_url": "/tmp/test"}})
     assert isinstance(component, Measure)
 
 
@@ -28,8 +26,7 @@ def test_build_evaluate():
     """Registry builds Evaluate."""
     from impact_engine_orchestrator.components.evaluate.evaluate import Evaluate
 
-    stage = StageConfig(component="Evaluate")
-    component = build(stage)
+    component = build({"component": "Evaluate"})
     assert isinstance(component, Evaluate)
 
 
@@ -37,8 +34,7 @@ def test_build_mock_allocate():
     """Registry builds MockAllocate."""
     from impact_engine_orchestrator.components.allocate.mock import MockAllocate
 
-    stage = StageConfig(component="MockAllocate")
-    component = build(stage)
+    component = build({"component": "MockAllocate"})
     assert isinstance(component, MockAllocate)
 
 
@@ -46,8 +42,7 @@ def test_build_minimax_regret_allocate():
     """Registry builds MinimaxRegretAllocate (AllocateComponent) via config key."""
     from impact_engine_orchestrator.components.allocate.allocate import AllocateComponent
 
-    stage = StageConfig(component="MinimaxRegretAllocate")
-    component = build(stage)
+    component = build({"component": "MinimaxRegretAllocate"})
     assert isinstance(component, AllocateComponent)
 
 

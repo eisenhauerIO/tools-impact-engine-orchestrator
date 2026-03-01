@@ -6,7 +6,6 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 
 from impact_engine_orchestrator.components.base import PipelineComponentProtocol
-from impact_engine_orchestrator.config import PipelineConfig
 from impact_engine_orchestrator.contracts.report import OutcomeReport
 
 _MEASURE_REQUIRED_KEYS = frozenset(
@@ -57,7 +56,7 @@ class Orchestrator:
         measure: PipelineComponentProtocol,
         evaluate: PipelineComponentProtocol,
         allocate: PipelineComponentProtocol,
-        config: PipelineConfig,
+        config: dict,
     ):
         self.measure = measure
         self.evaluate = evaluate
@@ -65,32 +64,32 @@ class Orchestrator:
         self.config = config
 
     @classmethod
-    def from_config(cls, config: PipelineConfig) -> Orchestrator:
-        """Build an Orchestrator from a PipelineConfig with stage configs."""
+    def from_config(cls, config: dict) -> Orchestrator:
+        """Build an Orchestrator from a pipeline config dict with stage configs."""
         from impact_engine_orchestrator import registry
 
-        assert config.measure_stage is not None, "measure_stage required for from_config"
-        assert config.evaluate_stage is not None, "evaluate_stage required for from_config"
-        assert config.allocate_stage is not None, "allocate_stage required for from_config"
+        for key in ("measure_stage", "evaluate_stage", "allocate_stage"):
+            if config.get(key) is None:
+                raise ValueError(f"{key} is required")
 
-        measure = registry.build(config.measure_stage)
-        evaluate = registry.build(config.evaluate_stage)
-        allocate = registry.build(config.allocate_stage)
+        measure = registry.build(config["measure_stage"])
+        evaluate = registry.build(config["evaluate_stage"])
+        allocate = registry.build(config["allocate_stage"])
         return cls(measure=measure, evaluate=evaluate, allocate=allocate, config=config)
 
     def run(self) -> dict:
         """Execute all pipeline stages and return combined results."""
-        initiatives = self.config.initiatives
-        cost_by_id = {i.initiative_id: i.cost_to_scale for i in initiatives}
-        config_by_id = {i.initiative_id: i.measure_config for i in initiatives}
+        initiatives = self.config["initiatives"]
+        cost_by_id = {i["initiative_id"]: i["cost_to_scale"] for i in initiatives}
+        config_by_id = {i["initiative_id"]: i["measure_config"] for i in initiatives}
 
-        with ThreadPoolExecutor(max_workers=self.config.max_workers) as pool:
+        with ThreadPoolExecutor(max_workers=self.config["max_workers"]) as pool:
             # 1. MEASURE (pilot) - parallel (enrich with measure_config and evaluate_strategy)
             measure_inputs = [
                 {
-                    "initiative_id": i.initiative_id,
-                    "measure_config": i.measure_config,
-                    "evaluate_strategy": i.evaluate_strategy,
+                    "initiative_id": i["initiative_id"],
+                    "measure_config": i["measure_config"],
+                    "evaluate_strategy": i["evaluate_strategy"],
                 }
                 for i in initiatives
             ]
@@ -124,7 +123,7 @@ class Orchestrator:
             alloc_result = self.allocate.execute(
                 {
                     "initiatives": eval_results,
-                    "budget": self.config.budget,
+                    "budget": self.config["budget"],
                 }
             )
             _validate_stage_output("ALLOCATE", alloc_result, _ALLOCATE_REQUIRED_KEYS)
@@ -134,7 +133,7 @@ class Orchestrator:
             scale_inputs = [
                 {
                     "initiative_id": iid,
-                    "sample_size": self.config.scale_sample_size,
+                    "sample_size": self.config["scale_sample_size"],
                     "measure_config": config_by_id[iid],
                 }
                 for iid in selected_ids

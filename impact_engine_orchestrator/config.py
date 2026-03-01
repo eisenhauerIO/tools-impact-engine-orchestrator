@@ -1,7 +1,9 @@
 """Pipeline and initiative configuration."""
 
+import dataclasses
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -38,10 +40,14 @@ class PipelineConfig:
 
     def __post_init__(self):
         """Validate configuration invariants."""
-        assert self.budget > 0, f"budget must be positive, got {self.budget}"
-        assert self.scale_sample_size > 0, f"scale_sample_size must be positive, got {self.scale_sample_size}"
-        assert len(self.initiatives) > 0, "initiatives must not be empty"
-        assert self.max_workers > 0, f"max_workers must be positive, got {self.max_workers}"
+        if self.budget <= 0:
+            raise ValueError(f"budget must be positive, got {self.budget}")
+        if self.scale_sample_size <= 0:
+            raise ValueError(f"scale_sample_size must be positive, got {self.scale_sample_size}")
+        if len(self.initiatives) == 0:
+            raise ValueError("initiatives must not be empty")
+        if self.max_workers <= 0:
+            raise ValueError(f"max_workers must be positive, got {self.max_workers}")
 
 
 def _load_stage_config(config_path: str) -> StageConfig:
@@ -55,8 +61,8 @@ def _load_stage_config(config_path: str) -> StageConfig:
     return StageConfig(component=component, kwargs=raw)
 
 
-def load_config(path: str) -> PipelineConfig:
-    """Load a PipelineConfig from a YAML file."""
+def load_config(path: str) -> dict[str, Any]:
+    """Load pipeline configuration from a YAML file."""
     config_dir = Path(path).parent
     with open(path) as f:
         raw = yaml.safe_load(f)
@@ -82,12 +88,14 @@ def load_config(path: str) -> PipelineConfig:
             ic.measure_config = str(config_dir / ic.measure_config)
         initiatives.append(ic)
 
-    return PipelineConfig(
-        budget=raw["budget"],
-        scale_sample_size=raw.get("scale_sample_size", 5000),
-        max_workers=raw.get("max_workers", 4),
-        initiatives=initiatives,
-        measure_stage=measure_stage,
-        evaluate_stage=evaluate_stage,
-        allocate_stage=allocate_stage,
+    return dataclasses.asdict(
+        PipelineConfig(
+            budget=raw["budget"],
+            scale_sample_size=raw.get("scale_sample_size", 5000),
+            max_workers=raw.get("max_workers", 4),
+            initiatives=initiatives,
+            measure_stage=measure_stage,
+            evaluate_stage=evaluate_stage,
+            allocate_stage=allocate_stage,
+        )
     )

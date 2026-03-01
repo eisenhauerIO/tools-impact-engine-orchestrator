@@ -1,3 +1,5 @@
+import dataclasses
+
 import pytest
 
 from impact_engine_orchestrator.components.allocate.allocate import AllocateComponent
@@ -16,10 +18,12 @@ def _make_orchestrator(measure_env, budget=100000, initiative_specs=None):
             ("init-003", 8000),
         ]
     initiatives = [make_initiative(iid, cost) for iid, cost in initiative_specs]
-    config = PipelineConfig(
-        budget=budget,
-        scale_sample_size=5000,
-        initiatives=initiatives,
+    config = dataclasses.asdict(
+        PipelineConfig(
+            budget=budget,
+            scale_sample_size=5000,
+            initiatives=initiatives,
+        )
     )
     return Orchestrator(
         measure=make_measure(),

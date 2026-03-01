@@ -20,5 +20,9 @@ class MeasureResult:
 
     def __post_init__(self):
         """Validate contract invariants."""
-        assert self.ci_lower <= self.effect_estimate <= self.ci_upper
-        assert self.sample_size >= 30
+        if not (self.ci_lower <= self.effect_estimate <= self.ci_upper):
+            raise ValueError(
+                f"effect_estimate {self.effect_estimate} must lie within [{self.ci_lower}, {self.ci_upper}]"
+            )
+        if self.sample_size < 30:
+            raise ValueError(f"sample_size must be >= 30, got {self.sample_size}")

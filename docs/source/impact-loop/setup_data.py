@@ -34,8 +34,8 @@ def main():
 
     config = load_config(args.config)
 
-    for initiative in config.initiatives:
-        iid = initiative.initiative_id
+    for initiative in config["initiatives"]:
+        iid = initiative["initiative_id"]
         sim_config = SIMULATOR_CONFIGS_DIR / f"{iid}.yaml"
 
         if not sim_config.exists():
@@ -47,7 +47,7 @@ def main():
         products = job_info.load_df("products")
 
         # Write products.csv to the path the measure config expects
-        output_path = Path(_get_products_path(initiative.measure_config))
+        output_path = Path(_get_products_path(initiative["measure_config"]))
         output_path.parent.mkdir(parents=True, exist_ok=True)
         products.to_csv(output_path, index=False)
 
