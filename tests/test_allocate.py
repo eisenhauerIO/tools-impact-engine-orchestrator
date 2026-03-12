@@ -2,7 +2,7 @@
 
 import logging
 
-from impact_engine_allocate.solver import BayesianSolver
+from impact_engine_allocate.allocation import BayesianAllocation
 
 from impact_engine_orchestrator.components.allocate.allocate import AllocateComponent
 
@@ -127,7 +127,7 @@ class TestAdapterSolverInjection:
         assert result["solver_detail"]["rule"] == "minimax_regret"
 
     def test_bayesian_solver_via_component(self, sample_event):
-        solver = BayesianSolver(weights={"best": 0.25, "med": 0.50, "worst": 0.25})
+        solver = BayesianAllocation(weights={"best": 0.25, "med": 0.50, "worst": 0.25})
         adapter = AllocateComponent(solver=solver)
         result = adapter.execute(sample_event)
         assert set(result.keys()) == ALLOCATE_RESULT_KEYS
@@ -135,7 +135,7 @@ class TestAdapterSolverInjection:
         assert "weights" in result["solver_detail"]["detail"]
 
     def test_laplace_as_equal_weights(self, sample_event):
-        solver = BayesianSolver(weights={"best": 1 / 3, "med": 1 / 3, "worst": 1 / 3})
+        solver = BayesianAllocation(weights={"best": 1 / 3, "med": 1 / 3, "worst": 1 / 3})
         adapter = AllocateComponent(solver=solver)
         result = adapter.execute(sample_event)
         assert result["solver_detail"]["rule"] == "bayesian"

@@ -5,10 +5,14 @@ from collections.abc import Callable
 from dataclasses import asdict
 from typing import Any
 
+from impact_engine_allocate.allocation import (
+    AllocationRule,
+    MinimaxRegretAllocation,
+    calculate_gamma,
+    empty_rule_result,
+    preprocess,
+)
 from impact_engine_allocate.models import AllocateResult
-from impact_engine_allocate.solver._common import calculate_gamma, empty_solver_result, preprocess
-from impact_engine_allocate.solver._types import AllocationSolver
-from impact_engine_allocate.solver.minimax_regret import MinimaxRegretSolver
 
 from impact_engine_orchestrator.components.base import PipelineComponent
 
@@ -24,7 +28,7 @@ _FIELD_MAP_IN: dict[str, str] = {
 
 
 def _to_solver_format(initiative: dict[str, Any]) -> dict[str, Any]:
-    """Map an orchestrator initiative dict to solver field names.
+    """Map an orchestrator initiative dict to allocation field names.
 
     Parameters
     ----------
@@ -34,7 +38,7 @@ def _to_solver_format(initiative: dict[str, Any]) -> dict[str, Any]:
     Returns
     -------
     dict[str, Any]
-        Initiative dict with solver field names.
+        Initiative dict with allocation field names.
     """
     return {_FIELD_MAP_IN.get(key, key): value for key, value in initiative.items()}
 
@@ -44,12 +48,12 @@ class AllocateComponent(PipelineComponent):
 
     Handles field mapping and preprocessing (confidence filtering,
     effective return computation), then delegates portfolio selection
-    to the configured solver.
+    to the configured rule.
 
     Parameters
     ----------
-    solver : AllocationSolver, optional
-        Decision rule to use. Defaults to :class:`MinimaxRegretSolver`.
+    solver : AllocationRule, optional
+        Decision rule to use. Defaults to :class:`MinimaxRegretAllocation`.
     min_confidence_threshold : float
         Initiatives below this confidence are excluded before optimization.
     min_portfolio_worst_return : float
@@ -60,12 +64,12 @@ class AllocateComponent(PipelineComponent):
 
     def __init__(
         self,
-        solver: AllocationSolver | None = None,
+        solver: AllocationRule | None = None,
         min_confidence_threshold: float = 0.0,
         min_portfolio_worst_return: float = 0.0,
         confidence_penalty_func: Callable[[float], float] = calculate_gamma,
     ) -> None:
-        self._solver = solver or MinimaxRegretSolver()
+        self._solver = solver or MinimaxRegretAllocation()
         self.min_confidence_threshold = min_confidence_threshold
         self.min_portfolio_worst_return = min_portfolio_worst_return
         self._confidence_penalty_func = confidence_penalty_func
@@ -101,7 +105,7 @@ class AllocateComponent(PipelineComponent):
         )
 
         if not processed:
-            solver_result = empty_solver_result("No Eligible Initiatives", "none")
+            solver_result = empty_rule_result("No Eligible Initiatives", "none")
         else:
             solver_result = self._solver(processed, budget, self.min_portfolio_worst_return)
 

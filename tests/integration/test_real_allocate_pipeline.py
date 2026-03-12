@@ -23,6 +23,7 @@ def _make_orchestrator(measure_env, budget=100000, initiative_specs=None):
             budget=budget,
             scale_sample_size=5000,
             initiatives=initiatives,
+            max_workers=1,
         )
     )
     return Orchestrator(
