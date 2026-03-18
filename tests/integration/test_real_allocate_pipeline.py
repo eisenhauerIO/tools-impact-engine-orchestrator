@@ -91,7 +91,9 @@ def test_bayesian_pipeline(measure_env):
     orchestrator = _make_orchestrator(measure_env, allocate_kwargs=_BAYESIAN_KWARGS)
     result = orchestrator.run()
 
-    assert len(result["outcome_reports"]) > 0
+    selected = result["allocate_result"]["selected_initiatives"]
+    assert len(result["outcome_reports"]) == len(selected)
+    assert len(result["scale_results"]) == len(selected)
 
 
 def test_bayesian_contract_invariants(measure_env):
