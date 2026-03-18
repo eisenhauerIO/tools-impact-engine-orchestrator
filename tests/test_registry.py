@@ -39,19 +39,19 @@ def test_build_mock_allocate():
 
 
 def test_build_minimax_regret_allocate():
-    """Registry builds MinimaxRegretAllocate (stateless AllocateComponent)."""
-    from impact_engine_orchestrator.components.allocate.allocate import AllocateComponent
+    """Registry builds MinimaxRegretAllocate (stateless Allocate)."""
+    from impact_engine_orchestrator.components.allocate.allocate import Allocate
 
     component = build({"component": "MinimaxRegretAllocate"})
-    assert isinstance(component, AllocateComponent)
+    assert isinstance(component, Allocate)
 
 
 def test_build_bayesian_allocate():
-    """Registry builds BayesianAllocate (same stateless AllocateComponent)."""
-    from impact_engine_orchestrator.components.allocate.allocate import AllocateComponent
+    """Registry builds BayesianAllocate (same stateless Allocate)."""
+    from impact_engine_orchestrator.components.allocate.allocate import Allocate
 
     component = build({"component": "BayesianAllocate"})
-    assert isinstance(component, AllocateComponent)
+    assert isinstance(component, Allocate)
 
 
 def test_missing_stage_config_file():
@@ -102,7 +102,7 @@ def test_from_config_round_trip(tmp_path):
 
 def test_from_config_with_real_components(tmp_path):
     """Load config with Measure + Evaluate + MinimaxRegretAllocate → verify types."""
-    from impact_engine_orchestrator.components.allocate.allocate import AllocateComponent
+    from impact_engine_orchestrator.components.allocate.allocate import Allocate
     from impact_engine_orchestrator.components.evaluate.evaluate import Evaluate
     from impact_engine_orchestrator.components.measure.measure import Measure
 
@@ -136,4 +136,4 @@ def test_from_config_with_real_components(tmp_path):
 
     assert isinstance(orchestrator.measure, Measure)
     assert isinstance(orchestrator.evaluate, Evaluate)
-    assert isinstance(orchestrator.allocate, AllocateComponent)
+    assert isinstance(orchestrator.allocate, Allocate)

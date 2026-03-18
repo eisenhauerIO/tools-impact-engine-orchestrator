@@ -4,7 +4,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from impact_engine_measure import evaluate_impact, load_results
+from impact_engine_measure import load_results, measure_impact
 
 from impact_engine_orchestrator.components.base import PipelineComponent
 from impact_engine_orchestrator.contracts.measure import MeasureResult
@@ -111,7 +111,7 @@ class Measure(PipelineComponent):
         config_path = event["measure_config"]
         evaluate_strategy = event.get("evaluate_strategy", "score")
 
-        job_info = evaluate_impact(
+        job_info = measure_impact(
             config_path=config_path,
             storage_url=self._storage_url,
             job_id=initiative_id,

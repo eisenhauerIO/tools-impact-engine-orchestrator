@@ -3,7 +3,7 @@
 import logging
 from dataclasses import asdict
 
-from impact_engine_allocate import allocate, load_initiatives
+from impact_engine_allocate import allocate_portfolio, load_initiatives
 from impact_engine_allocate.models import AllocateResult
 
 from impact_engine_orchestrator.components.base import PipelineComponent
@@ -11,7 +11,7 @@ from impact_engine_orchestrator.components.base import PipelineComponent
 logger = logging.getLogger(__name__)
 
 
-class AllocateComponent(PipelineComponent):
+class Allocate(PipelineComponent):
     """Delegate portfolio selection to the allocate package facade.
 
     The adapter calls ``allocate(config, data_dir)`` which reads
@@ -40,7 +40,7 @@ class AllocateComponent(PipelineComponent):
         data_dir = event["data_dir"]
         allocate_config = event["allocate_config"]
 
-        solver_result = allocate(allocate_config, data_dir)
+        solver_result = allocate_portfolio(allocate_config, data_dir)
 
         # Read initiatives to build predicted_returns and budget_allocated.
         initiatives = load_initiatives(data_dir, allocate_config["costs"])

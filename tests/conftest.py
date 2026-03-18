@@ -12,7 +12,7 @@ from impact_engine_orchestrator.config import InitiativeConfig
 
 @pytest.fixture()
 def measure_env(tmp_path):
-    """Provide helpers to create real Measure instances backed by evaluate_impact.
+    """Provide helpers to create real Measure instances backed by measure_impact.
 
     Returns (make_initiative, make_measure, storage_url) where:
     - make_initiative(id, cost) creates an InitiativeConfig with a working measure config

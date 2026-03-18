@@ -2,7 +2,7 @@ import dataclasses
 
 import pytest
 
-from impact_engine_orchestrator.components.allocate.allocate import AllocateComponent
+from impact_engine_orchestrator.components.allocate.allocate import Allocate
 from impact_engine_orchestrator.components.evaluate.evaluate import Evaluate
 from impact_engine_orchestrator.config import PipelineConfig, StageConfig
 from impact_engine_orchestrator.contracts.types import ModelType
@@ -34,7 +34,7 @@ def _make_orchestrator(measure_env, budget=100000, initiative_specs=None, alloca
     return Orchestrator(
         measure=make_measure(),
         evaluate=Evaluate(),
-        allocate=AllocateComponent(),
+        allocate=Allocate(),
         config=config,
     )
 
