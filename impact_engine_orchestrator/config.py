@@ -50,35 +50,21 @@ class PipelineConfig:
             raise ValueError(f"max_workers must be positive, got {self.max_workers}")
 
 
-def _load_stage_config(config_path: str) -> StageConfig:
-    """Load a stage config YAML and return a StageConfig."""
-    path = Path(config_path)
-    if not path.exists():
-        raise FileNotFoundError(f"Stage config file not found: {config_path}")
-    with open(path) as f:
-        raw = yaml.safe_load(f)
-    component = raw.pop("component")
-    return StageConfig(component=component, kwargs=raw)
-
-
 def load_config(path: str) -> dict[str, Any]:
-    """Load pipeline configuration from a YAML file."""
+    """Load pipeline configuration from a YAML file.
+
+    The YAML must specify ``storage_url`` (where measure writes results) and an
+    ``allocate`` block with the decision rule.  Measure and Evaluate components
+    are always the canonical implementations; only Allocate parameters vary.
+    """
     config_dir = Path(path).parent
     with open(path) as f:
         raw = yaml.safe_load(f)
 
-    # Load stage configs (resolve paths relative to orchestrator YAML)
-    measure_stage = None
-    if "measure" in raw and "config" in raw["measure"]:
-        measure_stage = _load_stage_config(config_dir / raw["measure"]["config"])
-
-    evaluate_stage = None
-    if "evaluate" in raw and "config" in raw["evaluate"]:
-        evaluate_stage = _load_stage_config(config_dir / raw["evaluate"]["config"])
-
-    allocate_stage = None
-    if "allocate" in raw and "config" in raw["allocate"]:
-        allocate_stage = _load_stage_config(config_dir / raw["allocate"]["config"])
+    storage_url = raw["storage_url"]
+    measure_stage = StageConfig(component="Measure", kwargs={"storage_url": storage_url})
+    evaluate_stage = StageConfig(component="Evaluate")
+    allocate_stage = StageConfig(component="Allocate", kwargs=dict(raw["allocate"]))
 
     # Resolve initiative measure_config paths relative to orchestrator YAML
     initiatives = []

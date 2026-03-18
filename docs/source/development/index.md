@@ -4,13 +4,14 @@
 
 ```bash
 # Install
-pip install -e .
-
-# Run the orchestrator once
-python scripts/run_once.py --config config.yaml
+pip install hatch
+hatch env create
 
 # Run tests
-pytest tests/
+hatch run test
+
+# Lint
+hatch run lint
 ```
 
 ## Key Insight: SCALE = MEASURE (again)
@@ -23,30 +24,30 @@ SCALE is not a separate component. It is the orchestrator calling MEASURE a seco
 impact_engine_orchestrator/
 ├── __init__.py
 ├── orchestrator.py         # Fan-out/fan-in pipeline runner
-├── config.py               # PipelineConfig, MeasureConfig
+├── config.py               # PipelineConfig, InitiativeConfig, StageConfig + load_config()
+├── registry.py             # Component registry + build()
 ├── contracts/              # Dataclasses with validation
 │   ├── __init__.py
 │   ├── types.py            # ModelType enum
 │   ├── measure.py          # MeasureResult
-│   ├── evaluate.py         # EvaluateResult
-│   ├── allocate.py         # AllocateResult
+│   ├── evaluate.py         # Re-exports EvaluateResult from impact_engine_evaluate
+│   ├── allocate.py         # Re-exports AllocateResult from impact_engine_allocate
 │   └── report.py           # OutcomeReport
 └── components/
     ├── __init__.py
-    ├── base.py             # PipelineComponent ABC
+    ├── base.py             # PipelineComponent ABC + PipelineComponentProtocol
     ├── measure/
-    │   └── measure.py      # Measure (wraps impact_engine)
+    │   └── measure.py      # Measure adapter (wraps impact_engine_measure)
     ├── evaluate/
-    │   └── __init__.py     # Namespace (Evaluate from impact_engine_evaluate)
+    │   └── evaluate.py     # Evaluate adapter (wraps impact_engine_evaluate)
     └── allocate/
-        └── mock.py         # MockAllocate
+        ├── allocate.py     # Allocate adapter (wraps impact_engine_allocate)
+        └── mock.py         # MockAllocate for testing
 tests/
 ├── conftest.py
 └── integration/
     ├── test_mock_pipeline.py
     └── test_real_allocate_pipeline.py
-scripts/
-└── run_once.py
 ```
 
 ## Current State
@@ -64,23 +65,9 @@ scripts/
 
 Scores initiatives by `confidence * R_med`, selects greedily until budget is exhausted.
 
-## Runner Script
+## Tutorial
 
-`scripts/run_once.py` runs the orchestrator end-to-end:
-
-```{eval-rst}
-.. literalinclude:: ../../../scripts/run_once.py
-   :language: python
-```
-
-## Configuration
-
-`config.yaml` at the repo root:
-
-```{eval-rst}
-.. literalinclude:: ../../../config.yaml
-   :language: yaml
-```
+See `docs/source/impact-loop/tutorial.ipynb` for an end-to-end walkthrough using five simulated initiatives with known treatment effects.
 
 ## Integration Path
 
@@ -91,4 +78,4 @@ Scores initiatives by `confidence * R_med`, selects greedily until budget is exh
 | ~~3~~ | ~~Real ALLOCATE~~ | ~~Done — `MinimaxRegretAllocate` from `portfolio-allocation`~~ |
 | ~~4~~ | ~~Real EVALUATE~~ | ~~Done — `Evaluate` from `impact-engine-evaluate`~~ |
 
-Each swap is a single line change in the orchestrator constructor.
+Each swap is a config-file change: update the stage name under `measure_stage`, `evaluate_stage`, or `allocate_stage` in `config.yaml`. The registry resolves the name to the correct class at runtime — no Python edits needed.

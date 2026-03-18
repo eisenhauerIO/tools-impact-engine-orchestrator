@@ -62,9 +62,8 @@ class Orchestrator:
         """Build an Orchestrator from a pipeline config dict with stage configs."""
         from impact_engine_orchestrator import registry
 
-        for key in ("measure_stage", "evaluate_stage", "allocate_stage"):
-            if config.get(key) is None:
-                raise ValueError(f"{key} is required")
+        if config.get("allocate_stage") is None:
+            raise ValueError("allocate_stage is required")
 
         measure = registry.build(config["measure_stage"])
         evaluate = registry.build(config["evaluate_stage"])

@@ -20,17 +20,17 @@ MEASURE and EVALUATE process multiple initiatives in parallel. ALLOCATE receives
 | After ALLOCATE | Portfolio selected | Fan-out to SCALE |
 | After SCALE | All scaled initiatives complete | Generate Outcome Report |
 
-## Handler Interface
+## Component Interface
 
-Each component processes a **single initiative** and returns a single result. Parallelism is handled by the orchestrator, not the handlers. Components are selected via YAML stage configs and constructed by the [component registry](../../impact_engine_orchestrator/registry.py) — no Python edits needed to swap implementations.
+Each component processes a **single initiative** and returns a single result. Parallelism is handled by the orchestrator, not the components. Components are selected via YAML stage configs and constructed by the component registry — no Python edits needed to swap implementations.
 
-> **Exception**: ALLOCATE is a fan-in component — it receives all evaluated initiatives as a batch (`{"initiatives": [...], "budget": ...}`) and returns a single portfolio selection. This is inherent to the allocation problem: you can't select a portfolio by looking at initiatives one at a time.
+> **Exception**: ALLOCATE is a fan-in component — it receives all evaluated initiatives as a batch (`{"data_dir": ..., "allocate_config": ...}`) and returns a single portfolio selection. This is inherent to the allocation problem: you can't select a portfolio by looking at initiatives one at a time.
 
 ```python
-def handler(event: dict, context=None) -> dict:
-    """Lambda-compatible interface for a single initiative."""
-    # Process one initiative
-    return result
+class MyComponent(PipelineComponent):
+    def execute(self, event: dict) -> dict:
+        """Process one initiative and return result."""
+        return result
 ```
 
 ## Deployment Strategy

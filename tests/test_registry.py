@@ -46,38 +46,18 @@ def test_build_allocate():
     assert isinstance(component, Allocate)
 
 
-def test_missing_stage_config_file():
-    """Missing stage config file raises FileNotFoundError."""
-    with pytest.raises(FileNotFoundError, match="Stage config file not found"):
-        from impact_engine_orchestrator.config import _load_stage_config
-
-        _load_stage_config("/nonexistent/path/config.yaml")
-
-
 def test_from_config_round_trip(tmp_path):
     """Load config → build orchestrator → verify component types."""
-    from impact_engine_orchestrator.components.allocate.mock import MockAllocate
+    from impact_engine_orchestrator.components.allocate.allocate import Allocate
 
-    # Create stage config files
-    measure_cfg = tmp_path / "measure.yaml"
-    measure_cfg.write_text(yaml.dump({"component": "MockAllocate"}))
-
-    evaluate_cfg = tmp_path / "evaluate.yaml"
-    evaluate_cfg.write_text(yaml.dump({"component": "Evaluate"}))
-
-    allocate_cfg = tmp_path / "allocate.yaml"
-    allocate_cfg.write_text(yaml.dump({"component": "MockAllocate"}))
-
-    # Create orchestrator config
     orchestrator_cfg = tmp_path / "config.yaml"
     orchestrator_cfg.write_text(
         yaml.dump(
             {
                 "budget": 100000,
                 "scale_sample_size": 5000,
-                "measure": {"config": "measure.yaml"},
-                "evaluate": {"config": "evaluate.yaml"},
-                "allocate": {"config": "allocate.yaml"},
+                "storage_url": "./data",
+                "allocate": {"rule": "minimax_regret"},
                 "initiatives": [
                     {"initiative_id": "test-1", "cost_to_scale": 10000, "measure_config": "dummy.yaml"},
                 ],
@@ -88,24 +68,15 @@ def test_from_config_round_trip(tmp_path):
     config = load_config(str(orchestrator_cfg))
     orchestrator = Orchestrator.from_config(config)
 
-    assert isinstance(orchestrator.allocate, MockAllocate)
+    assert isinstance(orchestrator.allocate, Allocate)
     assert isinstance(orchestrator, Orchestrator)
 
 
 def test_from_config_with_real_components(tmp_path):
-    """Load config with Measure + Evaluate + MinimaxRegretAllocate → verify types."""
+    """Load config with Measure + Evaluate + Allocate → verify types."""
     from impact_engine_orchestrator.components.allocate.allocate import Allocate
     from impact_engine_orchestrator.components.evaluate.evaluate import Evaluate
     from impact_engine_orchestrator.components.measure.measure import Measure
-
-    measure_cfg = tmp_path / "measure.yaml"
-    measure_cfg.write_text(yaml.dump({"component": "Measure", "storage_url": "./data"}))
-
-    evaluate_cfg = tmp_path / "evaluate.yaml"
-    evaluate_cfg.write_text(yaml.dump({"component": "Evaluate"}))
-
-    allocate_cfg = tmp_path / "allocate.yaml"
-    allocate_cfg.write_text(yaml.dump({"component": "Allocate"}))
 
     orchestrator_cfg = tmp_path / "config.yaml"
     orchestrator_cfg.write_text(
@@ -113,9 +84,8 @@ def test_from_config_with_real_components(tmp_path):
             {
                 "budget": 50000,
                 "scale_sample_size": 3000,
-                "measure": {"config": "measure.yaml"},
-                "evaluate": {"config": "evaluate.yaml"},
-                "allocate": {"config": "allocate.yaml"},
+                "storage_url": "./data",
+                "allocate": {"rule": "minimax_regret"},
                 "initiatives": [
                     {"initiative_id": "test-1", "cost_to_scale": 10000, "measure_config": "dummy.yaml"},
                 ],

@@ -20,15 +20,14 @@ Select which initiatives to scale given a limited budget.
 
 ## Algorithm
 
-Minimax regret optimization (linear programming).
+Minimax regret optimization (linear programming). The decision rule minimizes the worst-case regret across return scenarios, producing a budget-feasible portfolio.
 
 ```python
-from support import solve_minimax_regret_optimization
+from impact_engine_allocate import allocate_portfolio
 
-result = solve_minimax_regret_optimization(
-    initiatives=initiatives,
-    budget=budget,
-    scenarios=["best", "med", "worst"]
+result = allocate_portfolio(
+    config={"budget": budget, "costs": costs, "rule": "minimax_regret"},
+    data_dir="./results"
 )
 ```
 

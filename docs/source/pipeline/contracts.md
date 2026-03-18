@@ -53,23 +53,24 @@ Specific to each initiative, known upfront (not produced by pipeline stages).
 - `ci_lower <= effect_estimate <= ci_upper`
 - `p_value` in [0.0, 1.0]
 - `sample_size >= 30` (minimum for statistical validity)
-- `diagnostics` must contain `r_squared` or `log_likelihood`
 
 ## Evaluate → Allocate
 
+EVALUATE writes its result to `evaluate_result.json` in each initiative's job directory. ALLOCATE reads all job directories from disk rather than receiving evaluate outputs as an in-memory dict.
+
+The orchestrator validates the following required keys in the EVALUATE output dict before ALLOCATE runs:
+
 | Field | Type | Description |
 |-------|------|-------------|
-| initiative_id | InitiativeId | Initiative identifier |
-| confidence | Confidence | Methodology-based confidence (0-1) |
-| cost | Currency | Cost to scale this initiative |
-| R_best | float | Upper CI bound → best-case return |
-| R_med | float | Point estimate → median return |
-| R_worst | float | Lower CI bound → worst-case return |
-| model_type | ModelType | Source methodology (informational) |
+| `initiative_id` | InitiativeId | Initiative identifier |
+| `confidence` | Confidence | Methodology-based confidence (0-1) |
+| `confidence_range` | tuple[float, float] | (lower, upper) bounds from the method reviewer |
+| `strategy` | string | Strategy used: `"score"` or `"review"` |
+
+Costs to scale are passed separately via the orchestrator config (`allocate_config.costs`), not produced by EVALUATE.
 
 **Invariants:**
-- `R_worst <= R_med <= R_best`
-- `cost > 0` (zero-cost initiatives don't need allocation decisions)
+- `confidence` in [0.0, 1.0]
 
 ## Allocate → Scale
 

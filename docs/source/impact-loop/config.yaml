@@ -1,15 +1,10 @@
 budget: 100000
 scale_sample_size: 5000
 max_workers: 4
-
-measure:
-  config: configs/measure.yaml
-
-evaluate:
-  config: configs/evaluate.yaml
+storage_url: ./data/measure
 
 allocate:
-  config: configs/allocate.yaml
+  rule: minimax_regret
 
 initiatives:
   - initiative_id: product-desc-enhancement

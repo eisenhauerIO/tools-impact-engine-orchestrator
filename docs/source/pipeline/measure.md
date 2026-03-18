@@ -16,9 +16,9 @@ Run causal analysis on pilot data to estimate intervention effects.
 ## Key Entry Point
 
 ```python
-from impact_engine import evaluate_impact
+from impact_engine_measure import measure_impact
 
-result = evaluate_impact(
+result = measure_impact(
     config_path="config.yaml",
     storage_url="./results"
 )
