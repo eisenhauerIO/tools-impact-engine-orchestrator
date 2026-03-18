@@ -10,7 +10,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "nbmake", "nbconvert", "jupyter", "ruff"]
+dev = [
+    "pytest",
+    "nbmake",
+    "nbconvert",
+    "jupyter",
+    "ruff",
+    "online-retail-simulator @ git+https://github.com/eisenhauerIO/tools-online-retail-simulator.git",
+]
 
 [build-system]
 requires = ["hatchling"]

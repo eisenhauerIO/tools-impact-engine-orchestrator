@@ -4,22 +4,17 @@ DATA:
     CONFIG:
       mode: rule
       seed: 404
-      start_date: "2024-10-01"
-      end_date: "2024-12-31"
-      path: docs/source/impact-loop/data/pricing-display-test/products.csv
+      start_date: "2024-01-08"
+      end_date: "2024-01-08"
+      path: data/pricing-display-test/products.csv
   ENRICHMENT:
     FUNCTION: product_detail_boost
     PARAMS:
       enrichment_fraction: 1.0
-      enrichment_start: "2024-11-15"
+      enrichment_start: "2024-01-08"
       quality_boost: 0.3
       seed: 404
-  TRANSFORM:
-    FUNCTION: aggregate_by_date
-    PARAMS:
-      metric: revenue
 MEASUREMENT:
-  MODEL: interrupted_time_series
+  MODEL: experiment
   PARAMS:
-    intervention_date: "2024-11-15"
-    dependent_variable: revenue
+    formula: "revenue ~ enriched + price"
