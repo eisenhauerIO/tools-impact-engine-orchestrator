@@ -24,12 +24,6 @@ _EVALUATE_REQUIRED_KEYS = frozenset(
     {
         "initiative_id",
         "confidence",
-        "cost",
-        "return_best",
-        "return_median",
-        "return_worst",
-        "model_type",
-        "sample_size",
     }
 )
 _ALLOCATE_REQUIRED_KEYS = frozenset(
@@ -82,6 +76,7 @@ class Orchestrator:
         initiatives = self.config["initiatives"]
         cost_by_id = {i["initiative_id"]: i["cost_to_scale"] for i in initiatives}
         config_by_id = {i["initiative_id"]: i["measure_config"] for i in initiatives}
+        data_dir = self.config["measure_stage"]["kwargs"]["storage_url"]
 
         with ThreadPoolExecutor(max_workers=self.config["max_workers"]) as pool:
             # 1. MEASURE (pilot) - parallel (enrich with measure_config and evaluate_strategy)
@@ -98,32 +93,22 @@ class Orchestrator:
                 _validate_stage_output("MEASURE", r, _MEASURE_REQUIRED_KEYS)
 
             # 2. EVALUATE - parallel (pilot results carry job_dir; enrich with cost_to_scale)
+            # evaluate_confidence() writes evaluate_result.json to each job_dir.
             eval_inputs = [{**result, "cost_to_scale": cost_by_id[result["initiative_id"]]} for result in pilot_results]
-            eval_results_raw = self._fan_out(self.evaluate, eval_inputs, pool)
-
-            # Merge evaluate output with return scenarios and other allocate-required fields
-            # drawn from the pilot measure results.
-            pilot_by_id = {p["initiative_id"]: p for p in pilot_results}
-            eval_results = [
-                {
-                    **raw,
-                    "cost": cost_by_id[raw["initiative_id"]],
-                    "return_best": pilot_by_id[raw["initiative_id"]]["ci_upper"],
-                    "return_median": pilot_by_id[raw["initiative_id"]]["effect_estimate"],
-                    "return_worst": pilot_by_id[raw["initiative_id"]]["ci_lower"],
-                    "model_type": pilot_by_id[raw["initiative_id"]]["model_type"],
-                    "sample_size": pilot_by_id[raw["initiative_id"]]["sample_size"],
-                }
-                for raw in eval_results_raw
-            ]
+            eval_results = self._fan_out(self.evaluate, eval_inputs, pool)
             for r in eval_results:
                 _validate_stage_output("EVALUATE", r, _EVALUATE_REQUIRED_KEYS)
 
-            # 3. ALLOCATE - single (budget from config)
+            # 3. ALLOCATE - reads impact_results.json + evaluate_result.json from disk
+            allocate_config = {
+                "budget": self.config["budget"],
+                "costs": cost_by_id,
+                **self._allocate_kwargs(),
+            }
             alloc_result = self.allocate.execute(
                 {
-                    "initiatives": eval_results,
-                    "budget": self.config["budget"],
+                    "data_dir": data_dir,
+                    "allocate_config": allocate_config,
                 }
             )
             _validate_stage_output("ALLOCATE", alloc_result, _ALLOCATE_REQUIRED_KEYS)
@@ -152,6 +137,13 @@ class Orchestrator:
             "scale_results": scale_results,
             "outcome_reports": reports,
         }
+
+    def _allocate_kwargs(self) -> dict:
+        """Extract allocate-specific kwargs from stage config."""
+        stage = self.config.get("allocate_stage")
+        if stage is None:
+            return {}
+        return dict(stage.get("kwargs", {}))
 
     def _fan_out(self, component, inputs, pool):
         """Submit inputs to the pool and collect results in submission order.
@@ -186,7 +178,7 @@ class Orchestrator:
                 sample_size_scale=scale["sample_size"],
                 budget_allocated=alloc_result["budget_allocated"][iid],
                 confidence_score=evalu["confidence"],
-                model_type=evalu["model_type"],
+                model_type=pilot["model_type"],
             )
             reports.append(asdict(report))
         return reports

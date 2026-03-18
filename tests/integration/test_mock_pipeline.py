@@ -4,13 +4,13 @@ import pytest
 
 from impact_engine_orchestrator.components.allocate.mock import MockAllocate
 from impact_engine_orchestrator.components.evaluate.evaluate import Evaluate
-from impact_engine_orchestrator.config import PipelineConfig
+from impact_engine_orchestrator.config import PipelineConfig, StageConfig
 from impact_engine_orchestrator.contracts.types import ModelType
 from impact_engine_orchestrator.orchestrator import Orchestrator
 
 
 def _make_orchestrator(measure_env, budget=100000, initiative_specs=None):
-    make_initiative, make_measure = measure_env
+    make_initiative, make_measure, storage_url = measure_env
     if initiative_specs is None:
         initiative_specs = [
             ("init-001", 10000),
@@ -24,6 +24,8 @@ def _make_orchestrator(measure_env, budget=100000, initiative_specs=None):
             scale_sample_size=5000,
             initiatives=initiatives,
             max_workers=1,
+            measure_stage=StageConfig(component="Measure", kwargs={"storage_url": storage_url}),
+            allocate_stage=StageConfig(component="MockAllocate", kwargs={"rule": "minimax_regret"}),
         )
     )
     return Orchestrator(
@@ -56,10 +58,7 @@ def test_contract_invariants(measure_env):
         assert isinstance(pilot["model_type"], ModelType)
 
     for evalu in result["evaluate_results"]:
-        assert evalu["return_worst"] <= evalu["return_median"] <= evalu["return_best"]
         assert 0.0 <= evalu["confidence"] <= 1.0
-        assert evalu["cost"] > 0
-        assert isinstance(evalu["model_type"], ModelType)
 
     alloc = result["allocate_result"]
     for iid in alloc["selected_initiatives"]:
@@ -100,9 +99,16 @@ class _IncompleteMeasure:
 
 def test_missing_keys_raises(measure_env):
     """Validation catches incomplete stage output with a clear message."""
-    make_initiative, _ = measure_env
+    make_initiative, _, storage_url = measure_env
     initiatives = [make_initiative("bad-init", 5000)]
-    config = dataclasses.asdict(PipelineConfig(budget=100000, scale_sample_size=5000, initiatives=initiatives))
+    config = dataclasses.asdict(
+        PipelineConfig(
+            budget=100000,
+            scale_sample_size=5000,
+            initiatives=initiatives,
+            measure_stage=StageConfig(component="Measure", kwargs={"storage_url": storage_url}),
+        )
+    )
     orchestrator = Orchestrator(
         measure=_IncompleteMeasure(),
         evaluate=Evaluate(),

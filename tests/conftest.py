@@ -1,5 +1,7 @@
 """Shared fixtures for orchestrator tests."""
 
+import json
+
 import pandas as pd
 import pytest
 import yaml
@@ -12,9 +14,10 @@ from impact_engine_orchestrator.config import InitiativeConfig
 def measure_env(tmp_path):
     """Provide helpers to create real Measure instances backed by evaluate_impact.
 
-    Returns (make_initiative, make_measure) where:
+    Returns (make_initiative, make_measure, storage_url) where:
     - make_initiative(id, cost) creates an InitiativeConfig with a working measure config
     - make_measure() creates a Measure adapter wired to the temp storage
+    - storage_url is the path to the storage directory (used as data_dir for allocate)
     """
     n = 50
     products_df = pd.DataFrame(
@@ -76,22 +79,56 @@ def measure_env(tmp_path):
     def make_measure():
         return Measure(storage_url=storage_url)
 
-    return make_initiative, make_measure
+    return make_initiative, make_measure, storage_url
 
 
 @pytest.fixture()
-def sample_initiatives():
-    """Standard set of initiatives for allocate testing (orchestrator field names)."""
-    return [
-        {"initiative_id": "A", "cost": 4, "return_best": 15, "return_median": 10, "return_worst": 2, "confidence": 0.9},
-        {"initiative_id": "B", "cost": 3, "return_best": 12, "return_median": 8, "return_worst": 1, "confidence": 0.6},
-        {"initiative_id": "C", "cost": 3, "return_best": 9, "return_median": 6, "return_worst": 2, "confidence": 0.8},
-        {"initiative_id": "D", "cost": 2, "return_best": 7, "return_median": 5, "return_worst": 3, "confidence": 0.4},
-        {"initiative_id": "E", "cost": 5, "return_best": 18, "return_median": 9, "return_worst": 0, "confidence": 0.5},
+def allocate_data_dir(tmp_path):
+    """Create a disk-based data_dir with initiative subdirectories for allocate adapter tests.
+
+    Returns (data_dir, costs, initiatives_on_disk) where initiatives_on_disk is
+    the list of solver-format dicts that load_initiatives would return.
+    """
+    initiatives = [
+        {"id": "A", "cost": 4, "R_best": 15, "R_med": 10, "R_worst": 2, "confidence": 0.9},
+        {"id": "B", "cost": 3, "R_best": 12, "R_med": 8, "R_worst": 1, "confidence": 0.6},
+        {"id": "C", "cost": 3, "R_best": 9, "R_med": 6, "R_worst": 2, "confidence": 0.8},
+        {"id": "D", "cost": 2, "R_best": 7, "R_med": 5, "R_worst": 3, "confidence": 0.4},
+        {"id": "E", "cost": 5, "R_best": 18, "R_med": 9, "R_worst": 0, "confidence": 0.5},
     ]
+    costs = {i["id"]: i["cost"] for i in initiatives}
+    data_dir = tmp_path / "allocate_data"
 
+    for init in initiatives:
+        subdir = data_dir / init["id"]
+        subdir.mkdir(parents=True)
 
-@pytest.fixture()
-def sample_event(sample_initiatives):
-    """Orchestrator-shaped allocate event."""
-    return {"initiatives": sample_initiatives, "budget": 10}
+        # impact_results.json in experiment format (what _extract_estimates expects)
+        impact_results = {
+            "model_type": "experiment",
+            "data": {
+                "model_params": {"formula": "revenue ~ treatment + price"},
+                "impact_estimates": {
+                    "params": {"treatment": init["R_med"], "price": 0.5},
+                    "conf_int": {
+                        "treatment": [init["R_worst"], init["R_best"]],
+                        "price": [-0.1, 1.1],
+                    },
+                    "pvalues": {"treatment": 0.01, "price": 0.05},
+                },
+                "model_summary": {"nobs": 100},
+            },
+        }
+        (subdir / "impact_results.json").write_text(json.dumps(impact_results, indent=2), encoding="utf-8")
+
+        # evaluate_result.json (what load_initiatives reads for confidence)
+        evaluate_result = {
+            "initiative_id": init["id"],
+            "confidence": init["confidence"],
+            "confidence_range": [0.0, 1.0],
+            "strategy": "score",
+            "report": "test",
+        }
+        (subdir / "evaluate_result.json").write_text(json.dumps(evaluate_result, indent=2), encoding="utf-8")
+
+    return str(data_dir), costs, initiatives

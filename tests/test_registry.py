@@ -39,10 +39,18 @@ def test_build_mock_allocate():
 
 
 def test_build_minimax_regret_allocate():
-    """Registry builds MinimaxRegretAllocate (AllocateComponent) via config key."""
+    """Registry builds MinimaxRegretAllocate (stateless AllocateComponent)."""
     from impact_engine_orchestrator.components.allocate.allocate import AllocateComponent
 
     component = build({"component": "MinimaxRegretAllocate"})
+    assert isinstance(component, AllocateComponent)
+
+
+def test_build_bayesian_allocate():
+    """Registry builds BayesianAllocate (same stateless AllocateComponent)."""
+    from impact_engine_orchestrator.components.allocate.allocate import AllocateComponent
+
+    component = build({"component": "BayesianAllocate"})
     assert isinstance(component, AllocateComponent)
 
 

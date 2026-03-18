@@ -1,17 +1,9 @@
 """ALLOCATE stage adapter for the orchestrator pipeline."""
 
 import logging
-from collections.abc import Callable
 from dataclasses import asdict
-from typing import Any
 
-from impact_engine_allocate.allocation import (
-    AllocationRule,
-    MinimaxRegretAllocation,
-    calculate_gamma,
-    empty_rule_result,
-    preprocess,
-)
+from impact_engine_allocate import allocate, load_initiatives
 from impact_engine_allocate.models import AllocateResult
 
 from impact_engine_orchestrator.components.base import PipelineComponent
@@ -19,69 +11,24 @@ from impact_engine_orchestrator.components.base import PipelineComponent
 logger = logging.getLogger(__name__)
 
 
-_FIELD_MAP_IN: dict[str, str] = {
-    "initiative_id": "id",
-    "return_best": "R_best",
-    "return_median": "R_med",
-    "return_worst": "R_worst",
-}
-
-
-def _to_solver_format(initiative: dict[str, Any]) -> dict[str, Any]:
-    """Map an orchestrator initiative dict to allocation field names.
-
-    Parameters
-    ----------
-    initiative : dict[str, Any]
-        Initiative dict with orchestrator field names.
-
-    Returns
-    -------
-    dict[str, Any]
-        Initiative dict with allocation field names.
-    """
-    return {_FIELD_MAP_IN.get(key, key): value for key, value in initiative.items()}
-
-
 class AllocateComponent(PipelineComponent):
-    """Select initiatives via a pluggable decision rule.
+    """Delegate portfolio selection to the allocate package facade.
 
-    Handles field mapping and preprocessing (confidence filtering,
-    effective return computation), then delegates portfolio selection
-    to the configured rule.
-
-    Parameters
-    ----------
-    solver : AllocationRule, optional
-        Decision rule to use. Defaults to :class:`MinimaxRegretAllocation`.
-    min_confidence_threshold : float
-        Initiatives below this confidence are excluded before optimization.
-    min_portfolio_worst_return : float
-        Minimum aggregate worst-case return constraint.
-    confidence_penalty_func : Callable[[float], float], optional
-        Maps confidence to penalty factor gamma. Default: ``1 - confidence``.
+    The adapter calls ``allocate(config, data_dir)`` which reads
+    ``impact_results.json`` and ``evaluate_result.json`` from each
+    initiative's job directory, handles field mapping, and dispatches
+    to the configured decision rule.
     """
-
-    def __init__(
-        self,
-        solver: AllocationRule | None = None,
-        min_confidence_threshold: float = 0.0,
-        min_portfolio_worst_return: float = 0.0,
-        confidence_penalty_func: Callable[[float], float] = calculate_gamma,
-    ) -> None:
-        self._solver = solver or MinimaxRegretAllocation()
-        self.min_confidence_threshold = min_confidence_threshold
-        self.min_portfolio_worst_return = min_portfolio_worst_return
-        self._confidence_penalty_func = confidence_penalty_func
 
     def execute(self, event: dict) -> dict:
-        """Run allocation and return an ``AllocateResult`` dict with solver detail.
+        """Run allocation via the allocate package facade.
 
         Parameters
         ----------
         event : dict
-            Must contain ``initiatives`` (list of dicts with orchestrator
-            field names) and ``budget`` (float).
+            Must contain ``data_dir`` (path to storage with per-initiative
+            subdirectories) and ``allocate_config`` (dict with ``budget``,
+            ``costs``, ``rule``, and optional solver kwargs).
 
         Returns
         -------
@@ -90,27 +37,17 @@ class AllocateComponent(PipelineComponent):
             ``predicted_returns``, ``budget_allocated``, and
             ``solver_detail``.
         """
-        if "initiatives" not in event or "budget" not in event:
-            raise ValueError("event must contain 'initiatives' and 'budget'")
-        initiatives = event["initiatives"]
-        budget = event["budget"]
+        data_dir = event["data_dir"]
+        allocate_config = event["allocate_config"]
 
-        solver_initiatives = [_to_solver_format(i) for i in initiatives]
-        id_to_initiative = {i["id"]: i for i in solver_initiatives}
+        solver_result = allocate(allocate_config, data_dir)
 
-        processed = preprocess(
-            solver_initiatives,
-            self.min_confidence_threshold,
-            self._confidence_penalty_func,
-        )
+        # Read initiatives to build predicted_returns and budget_allocated.
+        initiatives = load_initiatives(data_dir, allocate_config["costs"])
+        init_by_id = {i["id"]: i for i in initiatives}
 
-        if not processed:
-            solver_result = empty_rule_result("No Eligible Initiatives", "none")
-        else:
-            solver_result = self._solver(processed, budget, self.min_portfolio_worst_return)
-
-        status = solver_result["status"]
         selected_ids = solver_result["selected_initiatives"]
+        status = solver_result["status"]
 
         if status != "Optimal":
             logger.warning(
@@ -127,8 +64,8 @@ class AllocateComponent(PipelineComponent):
         result = asdict(
             AllocateResult(
                 selected_initiatives=selected_ids,
-                predicted_returns={sid: id_to_initiative[sid]["R_med"] for sid in selected_ids},
-                budget_allocated={sid: id_to_initiative[sid]["cost"] for sid in selected_ids},
+                predicted_returns={sid: init_by_id[sid]["R_med"] for sid in selected_ids},
+                budget_allocated={sid: init_by_id[sid]["cost"] for sid in selected_ids},
             )
         )
         result["solver_detail"] = {

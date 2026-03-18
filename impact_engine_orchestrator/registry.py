@@ -9,7 +9,8 @@ from impact_engine_orchestrator.components.measure.measure import Measure
 COMPONENT_REGISTRY: dict[str, type[PipelineComponentProtocol]] = {
     "Measure": Measure,
     "Evaluate": Evaluate,
-    "MinimaxRegretAllocate": AllocateComponent,  # key preserved for config compatibility
+    "MinimaxRegretAllocate": AllocateComponent,
+    "BayesianAllocate": AllocateComponent,
     "MockAllocate": MockAllocate,
 }
 
@@ -20,4 +21,8 @@ def build(stage_config: dict) -> PipelineComponentProtocol:
     if name not in COMPONENT_REGISTRY:
         raise KeyError(f"Unknown component {name!r}. Available: {sorted(COMPONENT_REGISTRY)}")
     cls = COMPONENT_REGISTRY[name]
-    return cls(**stage_config.get("kwargs", {}))
+    kwargs = stage_config.get("kwargs", {})
+    # Allocate kwargs flow through the config dict at execute time, not constructor.
+    if cls is AllocateComponent:
+        return cls()
+    return cls(**kwargs)
