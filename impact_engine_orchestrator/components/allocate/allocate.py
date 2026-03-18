@@ -1,10 +1,11 @@
 """ALLOCATE stage adapter for the orchestrator pipeline."""
 
+import json
 import logging
-from dataclasses import asdict
+from pathlib import Path
 
-from impact_engine_allocate import allocate_portfolio, load_initiatives
-from impact_engine_allocate.models import AllocateResult
+from impact_engine_allocate import allocate_portfolio
+from impact_engine_allocate.allocation import ALLOCATE_RESULT_FILENAME
 
 from impact_engine_orchestrator.components.base import PipelineComponent
 
@@ -14,10 +15,9 @@ logger = logging.getLogger(__name__)
 class Allocate(PipelineComponent):
     """Delegate portfolio selection to the allocate package facade.
 
-    The adapter calls ``allocate(config, data_dir)`` which reads
-    ``impact_results.json`` and ``evaluate_result.json`` from each
-    initiative's job directory, handles field mapping, and dispatches
-    to the configured decision rule.
+    Calls ``allocate_portfolio(config, data_dir)`` which runs the solver and
+    writes ``allocate_result.json`` to ``data_dir``. The adapter reads this
+    file back as its output.
     """
 
     def execute(self, event: dict) -> dict:
@@ -33,45 +33,23 @@ class Allocate(PipelineComponent):
         Returns
         -------
         dict
-            Serialized ``AllocateResult`` with ``selected_initiatives``,
-            ``predicted_returns``, ``budget_allocated``, and
-            ``solver_detail``.
+            Dict with ``selected_initiatives``, ``predicted_returns``,
+            ``budget_allocated``, and ``solver_detail``.
         """
         data_dir = event["data_dir"]
         allocate_config = event["allocate_config"]
 
-        solver_result = allocate_portfolio(allocate_config, data_dir)
+        allocate_portfolio(allocate_config, data_dir)
 
-        # Read initiatives to build predicted_returns and budget_allocated.
-        initiatives = load_initiatives(data_dir, allocate_config["costs"])
-        init_by_id = {i["id"]: i for i in initiatives}
+        result_path = Path(data_dir) / ALLOCATE_RESULT_FILENAME
+        result = json.loads(result_path.read_text(encoding="utf-8"))
 
-        selected_ids = solver_result["selected_initiatives"]
-        status = solver_result["status"]
+        status = result.get("solver_detail", {}).get("rule", "unknown")
+        selected = result.get("selected_initiatives", [])
 
-        if status != "Optimal":
-            logger.warning(
-                "Solver returned non-optimal status: %s — returning empty allocation",
-                status,
-            )
+        if not selected:
+            logger.warning("Allocation selected no initiatives (rule=%s)", status)
         else:
-            logger.info(
-                "Allocation complete: status=%s, selected=%d initiatives",
-                status,
-                len(selected_ids),
-            )
+            logger.info("Allocation complete: rule=%s, selected=%d initiatives", status, len(selected))
 
-        result = asdict(
-            AllocateResult(
-                selected_initiatives=selected_ids,
-                predicted_returns={sid: init_by_id[sid]["R_med"] for sid in selected_ids},
-                budget_allocated={sid: init_by_id[sid]["cost"] for sid in selected_ids},
-            )
-        )
-        result["solver_detail"] = {
-            "rule": solver_result["rule"],
-            "objective_value": solver_result["objective_value"],
-            "total_actual_returns": solver_result["total_actual_returns"],
-            "detail": solver_result["detail"],
-        }
         return result

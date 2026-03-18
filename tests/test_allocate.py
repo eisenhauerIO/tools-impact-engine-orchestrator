@@ -110,7 +110,7 @@ class TestAdapterEdgeCases:
         adapter = Allocate()
         with caplog.at_level(logging.WARNING, logger="impact_engine_orchestrator.components.allocate.allocate"):
             adapter.execute(allocate_event)
-        assert "non-optimal status" in caplog.text.lower()
+        assert "selected no initiatives" in caplog.text.lower()
 
 
 class TestAdapterFieldMapping:

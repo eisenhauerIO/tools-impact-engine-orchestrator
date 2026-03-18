@@ -9,8 +9,7 @@ from impact_engine_orchestrator.components.measure.measure import Measure
 COMPONENT_REGISTRY: dict[str, type[PipelineComponentProtocol]] = {
     "Measure": Measure,
     "Evaluate": Evaluate,
-    "MinimaxRegretAllocate": Allocate,
-    "BayesianAllocate": Allocate,
+    "Allocate": Allocate,
     "MockAllocate": MockAllocate,
 }
 

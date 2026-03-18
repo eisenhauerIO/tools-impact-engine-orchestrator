@@ -28,7 +28,7 @@ def _make_orchestrator(measure_env, budget=100000, initiative_specs=None, alloca
             initiatives=initiatives,
             max_workers=1,
             measure_stage=StageConfig(component="Measure", kwargs={"storage_url": storage_url}),
-            allocate_stage=StageConfig(component="MinimaxRegretAllocate", kwargs=allocate_kwargs),
+            allocate_stage=StageConfig(component="Allocate", kwargs=allocate_kwargs),
         )
     )
     return Orchestrator(
@@ -43,7 +43,9 @@ def test_real_allocate_pipeline(measure_env):
     orchestrator = _make_orchestrator(measure_env)
     result = orchestrator.run()
 
-    assert len(result["outcome_reports"]) > 0
+    selected = result["allocate_result"]["selected_initiatives"]
+    assert len(result["outcome_reports"]) == len(selected)
+    assert len(result["scale_results"]) == len(selected)
 
 
 def test_real_allocate_contract_invariants(measure_env):

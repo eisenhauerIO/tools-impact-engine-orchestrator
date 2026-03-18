@@ -38,19 +38,11 @@ def test_build_mock_allocate():
     assert isinstance(component, MockAllocate)
 
 
-def test_build_minimax_regret_allocate():
-    """Registry builds MinimaxRegretAllocate (stateless Allocate)."""
+def test_build_allocate():
+    """Registry builds stateless Allocate."""
     from impact_engine_orchestrator.components.allocate.allocate import Allocate
 
-    component = build({"component": "MinimaxRegretAllocate"})
-    assert isinstance(component, Allocate)
-
-
-def test_build_bayesian_allocate():
-    """Registry builds BayesianAllocate (same stateless Allocate)."""
-    from impact_engine_orchestrator.components.allocate.allocate import Allocate
-
-    component = build({"component": "BayesianAllocate"})
+    component = build({"component": "Allocate"})
     assert isinstance(component, Allocate)
 
 
@@ -113,7 +105,7 @@ def test_from_config_with_real_components(tmp_path):
     evaluate_cfg.write_text(yaml.dump({"component": "Evaluate"}))
 
     allocate_cfg = tmp_path / "allocate.yaml"
-    allocate_cfg.write_text(yaml.dump({"component": "MinimaxRegretAllocate"}))
+    allocate_cfg.write_text(yaml.dump({"component": "Allocate"}))
 
     orchestrator_cfg = tmp_path / "config.yaml"
     orchestrator_cfg.write_text(

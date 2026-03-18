@@ -27,29 +27,37 @@ Always use `hatch run` to execute commands. Never bare `python` or `pytest`.
 - `impact_engine_orchestrator/config.py` — `PipelineConfig`, `InitiativeConfig`, `StageConfig` dataclasses + `load_config()`
 - `impact_engine_orchestrator/registry.py` — component registry mapping short names to classes + `build()`
 - `impact_engine_orchestrator/components/base.py` — `PipelineComponent` ABC + `PipelineComponentProtocol`
-- `impact_engine_orchestrator/components/measure/measure.py` — MEASURE adapter: wraps `evaluate_impact()`, normalizes model-specific output via `_extract_estimates()`
-- `impact_engine_orchestrator/components/evaluate/evaluate.py` — EVALUATE adapter: wraps `evaluate_confidence()`
-- `impact_engine_orchestrator/components/allocate/allocate.py` — ALLOCATE adapter: field mapping, preprocessing, solver delegation
+- `impact_engine_orchestrator/components/measure/measure.py` — MEASURE adapter: calls `measure_impact()`, reads `measure_result.json` for normalized estimates
+- `impact_engine_orchestrator/components/evaluate/evaluate.py` — EVALUATE adapter: calls `evaluate_confidence()`
+- `impact_engine_orchestrator/components/allocate/allocate.py` — ALLOCATE adapter: calls `allocate_portfolio()`, reads `allocate_result.json`
 - `impact_engine_orchestrator/components/allocate/mock.py` — `MockAllocate` for testing
 - `impact_engine_orchestrator/contracts/` — output dataclasses (`MeasureResult`, `OutcomeReport`, `ModelType` enum); evaluate and allocate contracts re-exported from their packages
 
-## Adapter-ownership principle
+## Disk-based stage output pattern
 
-**The orchestrator owns all glue logic.** Field mapping, result normalization, and
-contract validation live in the orchestrator so that component packages (measure,
-evaluate, allocate) can evolve independently. Components expose functional APIs
-and know nothing about each other or the orchestrator's naming conventions.
+Each pipeline stage writes its result to the job directory as a JSON file.
+Downstream stages read from disk rather than receiving in-memory data:
 
-Concretely:
-- `_extract_estimates()` normalizes 6 model-type-specific output schemas into a
-  flat `MeasureResult` — this logic belongs here, not in the measure package
-- `_FIELD_MAP_IN` translates orchestrator field names (`return_best`) to allocate
-  internal names (`R_best`) — this logic belongs here, not in the allocate package
-- `orchestrator.run()` enriches cross-stage data (e.g. merging pilot results into
-  evaluate output) — this is the orchestrator's core coordination responsibility
+| Stage | Writes | Read by |
+|-------|--------|---------|
+| MEASURE | `measure_result.json` | Orchestrator (for `MeasureResult`), Allocate (via `load_initiatives`) |
+| EVALUATE | `evaluate_result.json` | Allocate (via `load_initiatives`) |
+| ALLOCATE | `allocate_result.json` | Orchestrator (reads result back) |
 
-When a component changes its output schema, the orchestrator adapter is the place
-to update. Components never import from or adapt to the orchestrator.
+The orchestrator adapters are thin readers — they call the component's facade,
+then read the result file. No field mapping or model-specific parsing in the
+orchestrator.
+
+## Registry
+
+One entry per stage, behavior from config:
+
+| Entry | Class | Config controls |
+|-------|-------|----------------|
+| `Measure` | `Measure` | Model type via initiative measure config |
+| `Evaluate` | `Evaluate` | Strategy via manifest (`score` / `review`) |
+| `Allocate` | `Allocate` | Decision rule via `rule` field (`minimax_regret` / `bayesian`) |
+| `MockAllocate` | `MockAllocate` | Greedy heuristic for testing |
 
 ## Verification
 

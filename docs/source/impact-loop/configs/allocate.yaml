@@ -1,1 +1,2 @@
-component: MinimaxRegretAllocate
+component: Allocate
+rule: minimax_regret

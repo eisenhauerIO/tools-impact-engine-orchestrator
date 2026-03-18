@@ -1,112 +1,29 @@
-"""MEASURE adapter wrapping impact_engine_measure.evaluate_impact."""
+"""MEASURE adapter wrapping impact_engine_measure.measure_impact."""
 
 import json
 from dataclasses import asdict
 from pathlib import Path
 
 from impact_engine_measure import load_results, measure_impact
+from impact_engine_measure.normalize import MEASURE_RESULT_FILENAME
 
 from impact_engine_orchestrator.components.base import PipelineComponent
 from impact_engine_orchestrator.contracts.measure import MeasureResult
 from impact_engine_orchestrator.contracts.types import ModelType
 
 
-def _resolve_param_key(treatment_var: str, params: dict) -> str:
-    """Find the statsmodels coefficient key for a treatment variable.
-
-    Statsmodels encodes categoricals as e.g. ``enriched[T.True]``.
-    Returns an exact match first, then falls back to prefix matching.
-    """
-    if treatment_var in params:
-        return treatment_var
-    matches = [k for k in params if k.startswith(f"{treatment_var}[")]
-    if len(matches) == 1:
-        return matches[0]
-    raise KeyError(f"Treatment variable {treatment_var!r} not found in params: {list(params.keys())}")
-
-
-def _extract_estimates(result: dict) -> dict:
-    """Extract effect_estimate, ci_lower, ci_upper, p_value, sample_size from model-specific output."""
-    model_type = result["model_type"]
-    estimates = result["data"]["impact_estimates"]
-    summary = result["data"]["model_summary"]
-
-    if model_type == "experiment":
-        # OLS regression: first predictor in formula is the treatment variable.
-        # statsmodels encodes categoricals as e.g. "enriched[T.True]", so we
-        # match by prefix when an exact key isn't found.
-        formula = result["data"]["model_params"]["formula"]
-        treatment_var = formula.split("~")[1].strip().split("+")[0].strip()
-        key = _resolve_param_key(treatment_var, estimates["params"])
-        return {
-            "effect_estimate": estimates["params"][key],
-            "ci_lower": estimates["conf_int"][key][0],
-            "ci_upper": estimates["conf_int"][key][1],
-            "p_value": estimates["pvalues"][key],
-            "sample_size": int(summary["nobs"]),
-        }
-
-    if model_type == "synthetic_control":
-        return {
-            "effect_estimate": estimates["att"],
-            "ci_lower": estimates["ci_lower"],
-            "ci_upper": estimates["ci_upper"],
-            "p_value": None,
-            "sample_size": summary["n_post_periods"],
-        }
-
-    if model_type == "nearest_neighbour_matching":
-        att = estimates["att"]
-        att_se = estimates["att_se"]
-        return {
-            "effect_estimate": att,
-            "ci_lower": att - 1.96 * att_se,
-            "ci_upper": att + 1.96 * att_se,
-            "p_value": None,
-            "sample_size": summary["n_observations"],
-        }
-
-    if model_type == "interrupted_time_series":
-        effect = estimates["intervention_effect"]
-        return {
-            "effect_estimate": effect,
-            "ci_lower": effect,
-            "ci_upper": effect,
-            "p_value": None,
-            "sample_size": summary["n_observations"],
-        }
-
-    if model_type == "subclassification":
-        effect = estimates["treatment_effect"]
-        return {
-            "effect_estimate": effect,
-            "ci_lower": effect,
-            "ci_upper": effect,
-            "p_value": None,
-            "sample_size": summary["n_observations"],
-        }
-
-    if model_type == "metrics_approximation":
-        effect = estimates["impact"]
-        return {
-            "effect_estimate": effect,
-            "ci_lower": effect,
-            "ci_upper": effect,
-            "p_value": None,
-            "sample_size": summary["n_products"],
-        }
-
-    raise ValueError(f"Unknown model_type: {model_type!r}")
-
-
 class Measure(PipelineComponent):
-    """Adapter that delegates to impact_engine_measure.evaluate_impact."""
+    """Adapter that delegates to impact_engine_measure.measure_impact.
+
+    Reads ``measure_result.json`` (written by the measure package) for
+    normalized estimates instead of parsing model-specific output schemas.
+    """
 
     def __init__(self, storage_url: str):
         self._storage_url = storage_url
 
     def execute(self, event: dict) -> dict:
-        """Run evaluate_impact for one initiative and return a MeasureResult dict."""
+        """Run measure_impact for one initiative and return a MeasureResult dict."""
         initiative_id = event["initiative_id"]
         config_path = event["measure_config"]
         evaluate_strategy = event.get("evaluate_strategy", "score")
@@ -124,9 +41,11 @@ class Measure(PipelineComponent):
         manifest["evaluate_strategy"] = evaluate_strategy
         manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
-        result = load_results(job_info).impact_results
+        # Read normalized estimates written by the measure package.
+        measure_result_path = job_dir / MEASURE_RESULT_FILENAME
+        extracted = json.loads(measure_result_path.read_text(encoding="utf-8"))
 
-        extracted = _extract_estimates(result)
+        impact_results = load_results(job_info).impact_results
 
         measure_result = MeasureResult(
             initiative_id=initiative_id,
@@ -135,8 +54,8 @@ class Measure(PipelineComponent):
             ci_upper=extracted["ci_upper"],
             p_value=extracted["p_value"] if extracted["p_value"] is not None else 0.0,
             sample_size=extracted["sample_size"],
-            model_type=ModelType(result["model_type"]),
-            diagnostics=result["data"]["model_summary"],
+            model_type=ModelType(impact_results["model_type"]),
+            diagnostics=impact_results["data"]["model_summary"],
         )
         result_dict = asdict(measure_result)
         result_dict["job_dir"] = str(job_dir)
