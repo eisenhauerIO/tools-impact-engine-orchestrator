@@ -19,9 +19,18 @@ Assign a confidence score based on methodology reliability.
 
 ## Confidence by Methodology
 
+Confidence ranges are defined per method reviewer. Two reviewers are currently registered:
+
 | Model Type | Confidence Range | Rationale |
 |------------|------------------|-----------|
-| Experiment (RCT) | 0.85 - 1.0 | Gold standard causal inference |
-| Quasi-experiment | 0.60 - 0.84 | Strong but with assumptions |
-| Time-series | 0.40 - 0.59 | Trend-based, confounding risk |
-| Observational | 0.20 - 0.39 | Correlation, high bias risk |
+| `experiment` | 0.85 - 1.0 | Gold standard: randomised assignment eliminates confounding |
+| `quasi_experimental` | 0.60 - 0.85 | Strong but relies on identifying assumptions (parallel trends, instrument validity) |
+
+## Config Key
+
+Each initiative specifies its evaluation path via `evaluate_strategy` in the orchestrator config:
+
+| Value | Behaviour |
+|-------|-----------|
+| `"score"` | Deterministic draw from the method's confidence range (default, no LLM dependency) |
+| `"review"` | LLM-powered artifact review; requires evaluate backend config |

@@ -55,7 +55,6 @@ def test_from_config_round_trip(tmp_path):
         yaml.dump(
             {
                 "budget": 100000,
-                "scale_sample_size": 5000,
                 "storage_url": "./data",
                 "allocate": {"rule": "minimax_regret"},
                 "initiatives": [
@@ -83,7 +82,6 @@ def test_from_config_with_real_components(tmp_path):
         yaml.dump(
             {
                 "budget": 50000,
-                "scale_sample_size": 3000,
                 "storage_url": "./data",
                 "allocate": {"rule": "minimax_regret"},
                 "initiatives": [

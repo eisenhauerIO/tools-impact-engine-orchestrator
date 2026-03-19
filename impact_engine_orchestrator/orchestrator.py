@@ -117,7 +117,6 @@ class Orchestrator:
             scale_inputs = [
                 {
                     "initiative_id": iid,
-                    "sample_size": self.config["scale_sample_size"],
                     "measure_config": config_by_id[iid],
                 }
                 for iid in selected_ids

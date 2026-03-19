@@ -20,7 +20,6 @@ Shared across the entire run, not specific to any initiative.
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | budget | Currency | Total budget constraint for ALLOCATE |
-| scale_sample_size | int | Sample size for scale-phase MEASURE runs |
 | max_workers | int | Parallelism for fan-out stages |
 
 ### Initiative-Level Parameters

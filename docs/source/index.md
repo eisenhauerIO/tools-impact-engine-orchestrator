@@ -5,7 +5,9 @@
 :maxdepth: 1
 :caption: Contents
 
+impact-loop/tutorial
+configuration/index
 pipeline/index
-development/index
 api/index
+development/index
 ```

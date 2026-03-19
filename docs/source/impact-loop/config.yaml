@@ -1,5 +1,4 @@
 budget: 100000
-scale_sample_size: 5000
 max_workers: 4
 storage_url: ./data/measure
 

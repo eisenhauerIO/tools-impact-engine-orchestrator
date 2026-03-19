@@ -31,7 +31,6 @@ class PipelineConfig:
     """Problem-level parameters for a single orchestrator run."""
 
     budget: float
-    scale_sample_size: int
     initiatives: list[InitiativeConfig]
     max_workers: int = 4
     measure_stage: StageConfig | None = None
@@ -42,8 +41,6 @@ class PipelineConfig:
         """Validate configuration invariants."""
         if self.budget <= 0:
             raise ValueError(f"budget must be positive, got {self.budget}")
-        if self.scale_sample_size <= 0:
-            raise ValueError(f"scale_sample_size must be positive, got {self.scale_sample_size}")
         if len(self.initiatives) == 0:
             raise ValueError("initiatives must not be empty")
         if self.max_workers <= 0:
@@ -77,7 +74,6 @@ def load_config(path: str) -> dict[str, Any]:
     return dataclasses.asdict(
         PipelineConfig(
             budget=raw["budget"],
-            scale_sample_size=raw.get("scale_sample_size", 5000),
             max_workers=raw.get("max_workers", 4),
             initiatives=initiatives,
             measure_stage=measure_stage,

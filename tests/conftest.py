@@ -103,23 +103,15 @@ def allocate_data_dir(tmp_path):
         subdir = data_dir / init["id"]
         subdir.mkdir(parents=True)
 
-        # impact_results.json in experiment format (what _extract_estimates expects)
-        impact_results = {
-            "model_type": "experiment",
-            "data": {
-                "model_params": {"formula": "revenue ~ treatment + price"},
-                "impact_estimates": {
-                    "params": {"treatment": init["R_med"], "price": 0.5},
-                    "conf_int": {
-                        "treatment": [init["R_worst"], init["R_best"]],
-                        "price": [-0.1, 1.1],
-                    },
-                    "pvalues": {"treatment": 0.01, "price": 0.05},
-                },
-                "model_summary": {"nobs": 100},
-            },
+        # measure_result.json — normalized flat dict written by measure/normalize.py
+        measure_result = {
+            "effect_estimate": init["R_med"],
+            "ci_lower": init["R_worst"],
+            "ci_upper": init["R_best"],
+            "p_value": 0.01,
+            "sample_size": 100,
         }
-        (subdir / "impact_results.json").write_text(json.dumps(impact_results, indent=2), encoding="utf-8")
+        (subdir / "measure_result.json").write_text(json.dumps(measure_result, indent=2), encoding="utf-8")
 
         # evaluate_result.json (what load_initiatives reads for confidence)
         evaluate_result = {

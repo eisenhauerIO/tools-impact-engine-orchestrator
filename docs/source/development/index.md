@@ -1,17 +1,13 @@
 # Development
 
-## Quick Start
+## Commands
 
 ```bash
-# Install
 pip install hatch
 hatch env create
 
-# Run tests
-hatch run test
-
-# Lint
-hatch run lint
+hatch run test   # run pytest suite
+hatch run lint   # ruff check
 ```
 
 ## Key Insight: SCALE = MEASURE (again)
@@ -64,18 +60,3 @@ tests/
 ### MockAllocate
 
 Scores initiatives by `confidence * R_med`, selects greedily until budget is exhausted.
-
-## Tutorial
-
-See `docs/source/impact-loop/tutorial.ipynb` for an end-to-end walkthrough using five simulated initiatives with known treatment effects.
-
-## Integration Path
-
-| Phase | Action | Verification |
-|-------|--------|--------------|
-| ~~1~~ | ~~All Mocks~~ | ~~End-to-end flow works, deterministic~~ |
-| ~~2~~ | ~~Real MEASURE~~ | ~~Done — `Measure` adapter wrapping `impact_engine`~~ |
-| ~~3~~ | ~~Real ALLOCATE~~ | ~~Done — `MinimaxRegretAllocate` from `portfolio-allocation`~~ |
-| ~~4~~ | ~~Real EVALUATE~~ | ~~Done — `Evaluate` from `impact-engine-evaluate`~~ |
-
-Each swap is a config-file change: update the stage name under `measure_stage`, `evaluate_stage`, or `allocate_stage` in `config.yaml`. The registry resolves the name to the correct class at runtime — no Python edits needed.
