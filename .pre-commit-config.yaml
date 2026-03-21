@@ -29,6 +29,6 @@ repos:
         name: nbmake (notebook execution)
         entry: hatch run pytest --nbmake
         language: system
-        files: ^notebooks/.*\.ipynb$
+        files: \.ipynb$
         pass_filenames: true
         types: [jupyter]
