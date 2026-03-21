@@ -42,5 +42,5 @@ Bad:  Each initiative is MEASUREd... (verb form should be lowercase)
 ## Tutorials
 
 The impact-loop tutorial is marked non-executable (`nbsphinx execute: never`) because it
-requires `setup_data.py` to be run first to generate simulated product catalogs. Notebooks
+generates simulation data at runtime. Notebooks
 are tested separately via `pytest --nbmake`.
