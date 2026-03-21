@@ -3,6 +3,11 @@
 The orchestrator runs the full MEASURE → EVALUATE → ALLOCATE → SCALE pipeline
 from a single config file.
 
+```{image} ../_static/pipeline.svg
+:alt: Pipeline Execution Pattern
+:align: center
+```
+
 ## Quickstart
 
 **Step 1 — Write a pipeline config:**
@@ -28,37 +33,41 @@ initiatives:
 **Step 2 — Run the pipeline:**
 
 ```python
-from impact_engine_orchestrator import load_config, Orchestrator
+from impact_engine_orchestrator import run_pipeline
 
-config = load_config("pipeline.yaml")
-orchestrator = Orchestrator.from_config(config)
-results = orchestrator.run()
+results = run_pipeline("pipeline.yaml")
 ```
 
 **Step 3 — Read the results:**
 
 ```python
 # Per-initiative pilot measurements
-for report in results["initiative_reports"]:
-    print(report["initiative_id"], report["effect_estimate"], report["confidence"])
+for pilot in results["pilot_results"]:
+    print(pilot["initiative_id"], pilot["effect_estimate"], pilot["p_value"])
 
 # Portfolio allocation decision
-allocation = results["allocation"]
+allocation = results["allocate_result"]
 print(allocation["selected_initiatives"])
 print(allocation["budget_allocated"])
+
+# Outcome reports (predicted vs. actual at scale)
+for report in results["outcome_reports"]:
+    print(report["initiative_id"], report["predicted_return"], report["actual_return"])
 ```
 
 ## Output Structure
 
-`run()` returns a dict with two keys:
+`run_pipeline()` returns a dict with five keys:
 
 | Key | Type | Description |
 |-----|------|-------------|
-| `initiative_reports` | list[dict] | One entry per initiative with MEASURE + EVALUATE results |
-| `allocation` | dict | ALLOCATE result: selected initiatives, budget used, objective value |
+| `pilot_results` | list[dict] | MEASURE results for all initiatives (pilot phase) |
+| `evaluate_results` | list[dict] | EVALUATE confidence scores for all initiatives |
+| `allocate_result` | dict | ALLOCATE decision: selected initiatives, budget, predicted returns |
+| `scale_results` | list[dict] | MEASURE results for selected initiatives (scale phase) |
+| `outcome_reports` | list[dict] | Predicted vs. actual returns for selected initiatives |
 
-Each initiative report contains the fields from `MeasureResult` and `EvaluateResult`
-merged into a single dict — see the [API Reference](../api/index) for the full field list.
+See the [API Reference](../api/index) for the full field list per stage.
 
 ## Evaluate Strategy
 

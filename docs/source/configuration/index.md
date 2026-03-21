@@ -1,4 +1,4 @@
-# Configuration Reference
+# Configuration
 
 The pipeline is driven by a single YAML file passed to `load_config()`.
 

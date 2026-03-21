@@ -8,7 +8,6 @@
 
 guides/usage
 configuration/index
-pipeline/index
 api/index
 ```
 
@@ -17,5 +16,5 @@ api/index
 :maxdepth: 2
 :caption: Tutorials
 
-impact-loop/tutorial
+impact-loop/impact-loop
 ```

@@ -1,5 +1,13 @@
 # API Reference
 
+## Entry Point
+
+```{eval-rst}
+.. automodule:: impact_engine_orchestrator.api
+   :members:
+   :undoc-members:
+```
+
 ## Orchestrator
 
 ```{eval-rst}

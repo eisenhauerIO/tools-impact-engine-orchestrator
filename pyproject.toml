@@ -68,5 +68,5 @@ convention = "numpy"
 "docs/source/impact-loop/*.py" = ["D"]
 
 [tool.pytest.ini_options]
-addopts = "-v --nbmake --ignore=docs/source/impact-loop/tutorial.ipynb"
+addopts = "-v --nbmake --ignore=docs/source/impact-loop/impact-loop.ipynb"
 testpaths = ["tests", "docs/source/impact-loop"]

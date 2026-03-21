@@ -8,8 +8,7 @@ Usage:
 import argparse
 from pathlib import Path
 
-from impact_engine_orchestrator.config import load_config
-from impact_engine_orchestrator.orchestrator import Orchestrator
+from impact_engine_orchestrator import run_pipeline
 
 
 def print_reports(result):
@@ -47,9 +46,7 @@ def main():
     parser.add_argument("--config", type=str, default=str(default_config), help="Path to YAML config file")
     args = parser.parse_args()
 
-    config = load_config(args.config)
-    orchestrator = Orchestrator.from_config(config)
-    result = orchestrator.run()
+    result = run_pipeline(args.config)
     print_reports(result)
 
 
