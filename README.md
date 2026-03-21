@@ -12,8 +12,4 @@ Running a single causal study is hard enough. Running a portfolio of pilots — 
 
 **Impact Engine — Orchestrator** wires the full MEASURE → EVALUATE → ALLOCATE → SCALE pipeline into one config-driven run. A YAML file defines your initiatives, budget, and component settings. The orchestrator fans out pilot measurements in parallel, collects confidence-scored results, runs portfolio selection, then scales the winners — producing an outcome report that compares predicted vs actual impact. Swap any pipeline component by changing one line in the config.
 
-<p align="center">
-  <img src="docs/source/_static/overview.svg" alt="Impact Engine Orchestrator Overview">
-</p>
-
 Visit our [documentation](https://eisenhauerio.github.io/tools-impact-engine-orchestrator/) for details.

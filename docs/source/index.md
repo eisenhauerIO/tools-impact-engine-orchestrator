@@ -2,12 +2,20 @@
 ```
 
 ```{toctree}
-:maxdepth: 1
-:caption: Contents
+:hidden:
+:maxdepth: 2
+:caption: Guides
 
-impact-loop/tutorial
+guides/usage
 configuration/index
 pipeline/index
 api/index
-development/index
+```
+
+```{toctree}
+:hidden:
+:maxdepth: 2
+:caption: Tutorials
+
+impact-loop/tutorial
 ```
