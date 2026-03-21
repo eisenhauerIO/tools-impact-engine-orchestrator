@@ -2,7 +2,7 @@
 
 from dataclasses import asdict
 
-from impact_engine_allocate import load_initiatives
+from impact_engine_allocate.job_reader import load_initiatives
 
 from impact_engine_orchestrator.components.base import PipelineComponent
 from impact_engine_orchestrator.contracts.allocate import AllocateResult

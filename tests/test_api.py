@@ -2,11 +2,11 @@
 
 import yaml
 
-from impact_engine_orchestrator import run_pipeline
+from impact_engine_orchestrator import PipelineResult, run_pipeline
 
 
 def test_run_pipeline_returns_expected_shape(measure_env, tmp_path):
-    """run_pipeline() loads config from file and returns well-formed results."""
+    """run_pipeline() loads config from file and returns a typed PipelineResult."""
     make_initiative, _make_measure, storage_url = measure_env
     initiative = make_initiative("api-test-init", 10000)
 
@@ -32,9 +32,9 @@ def test_run_pipeline_returns_expected_shape(measure_env, tmp_path):
 
     result = run_pipeline(config_path)
 
-    assert "pilot_results" in result
-    assert "evaluate_results" in result
-    assert "allocate_result" in result
-    assert "scale_results" in result
-    assert "outcome_reports" in result
-    assert len(result["pilot_results"]) == 1
+    assert isinstance(result, PipelineResult)
+    assert len(result.pilot_results) == 1
+    assert hasattr(result, "evaluate_results")
+    assert hasattr(result, "allocate_result")
+    assert hasattr(result, "scale_results")
+    assert hasattr(result, "outcome_reports")

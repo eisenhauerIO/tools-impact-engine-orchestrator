@@ -42,24 +42,24 @@ def test_real_allocate_pipeline(measure_env):
     orchestrator = _make_orchestrator(measure_env)
     result = orchestrator.run()
 
-    selected = result["allocate_result"]["selected_initiatives"]
-    assert len(result["outcome_reports"]) == len(selected)
-    assert len(result["scale_results"]) == len(selected)
+    selected = result.allocate_result["selected_initiatives"]
+    assert len(result.outcome_reports) == len(selected)
+    assert len(result.scale_results) == len(selected)
 
 
 def test_real_allocate_contract_invariants(measure_env):
     orchestrator = _make_orchestrator(measure_env)
     result = orchestrator.run()
 
-    alloc = result["allocate_result"]
+    alloc = result.allocate_result
     for iid in alloc["selected_initiatives"]:
         assert iid in alloc["predicted_returns"]
         assert iid in alloc["budget_allocated"]
 
-    for report in result["outcome_reports"]:
-        assert report["prediction_error"] == pytest.approx(report["actual_return"] - report["predicted_return"])
-        assert report["sample_size_scale"] >= report["sample_size_pilot"]
-        assert isinstance(report["model_type"], ModelType)
+    for report in result.outcome_reports:
+        assert report.prediction_error == pytest.approx(report.actual_return - report.predicted_return)
+        assert report.sample_size_scale >= report.sample_size_pilot
+        assert isinstance(report.model_type, ModelType)
 
 
 def test_real_allocate_determinism(measure_env):
@@ -67,16 +67,16 @@ def test_real_allocate_determinism(measure_env):
     result1 = orchestrator.run()
     result2 = orchestrator.run()
 
-    assert result1["allocate_result"] == result2["allocate_result"]
+    assert result1.allocate_result == result2.allocate_result
 
 
 def test_real_allocate_empty_budget(measure_env):
     orchestrator = _make_orchestrator(measure_env, budget=1)
     result = orchestrator.run()
 
-    assert result["allocate_result"]["selected_initiatives"] == []
-    assert result["scale_results"] == []
-    assert result["outcome_reports"] == []
+    assert result.allocate_result["selected_initiatives"] == []
+    assert result.scale_results == []
+    assert result.outcome_reports == []
 
 
 # --- Bayesian pipeline tests ---
@@ -92,25 +92,25 @@ def test_bayesian_pipeline(measure_env):
     orchestrator = _make_orchestrator(measure_env, allocate_kwargs=_BAYESIAN_KWARGS)
     result = orchestrator.run()
 
-    selected = result["allocate_result"]["selected_initiatives"]
-    assert len(result["outcome_reports"]) == len(selected)
-    assert len(result["scale_results"]) == len(selected)
+    selected = result.allocate_result["selected_initiatives"]
+    assert len(result.outcome_reports) == len(selected)
+    assert len(result.scale_results) == len(selected)
 
 
 def test_bayesian_contract_invariants(measure_env):
     orchestrator = _make_orchestrator(measure_env, allocate_kwargs=_BAYESIAN_KWARGS)
     result = orchestrator.run()
 
-    alloc = result["allocate_result"]
+    alloc = result.allocate_result
     for iid in alloc["selected_initiatives"]:
         assert iid in alloc["predicted_returns"]
         assert iid in alloc["budget_allocated"]
     assert alloc["solver_detail"]["rule"] == "bayesian"
 
-    for report in result["outcome_reports"]:
-        assert report["prediction_error"] == pytest.approx(report["actual_return"] - report["predicted_return"])
-        assert report["sample_size_scale"] >= report["sample_size_pilot"]
-        assert isinstance(report["model_type"], ModelType)
+    for report in result.outcome_reports:
+        assert report.prediction_error == pytest.approx(report.actual_return - report.predicted_return)
+        assert report.sample_size_scale >= report.sample_size_pilot
+        assert isinstance(report.model_type, ModelType)
 
 
 def test_bayesian_determinism(measure_env):
@@ -118,13 +118,13 @@ def test_bayesian_determinism(measure_env):
     result1 = orchestrator.run()
     result2 = orchestrator.run()
 
-    assert result1["allocate_result"] == result2["allocate_result"]
+    assert result1.allocate_result == result2.allocate_result
 
 
 def test_bayesian_empty_budget(measure_env):
     orchestrator = _make_orchestrator(measure_env, budget=1, allocate_kwargs=_BAYESIAN_KWARGS)
     result = orchestrator.run()
 
-    assert result["allocate_result"]["selected_initiatives"] == []
-    assert result["scale_results"] == []
-    assert result["outcome_reports"] == []
+    assert result.allocate_result["selected_initiatives"] == []
+    assert result.scale_results == []
+    assert result.outcome_reports == []

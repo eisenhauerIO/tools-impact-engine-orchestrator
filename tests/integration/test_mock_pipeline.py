@@ -5,6 +5,7 @@ import pytest
 from impact_engine_orchestrator.components.allocate.mock import MockAllocate
 from impact_engine_orchestrator.components.evaluate.evaluate import Evaluate
 from impact_engine_orchestrator.config import PipelineConfig, StageConfig
+from impact_engine_orchestrator.contracts.pipeline import PipelineResult
 from impact_engine_orchestrator.contracts.types import ModelType
 from impact_engine_orchestrator.orchestrator import Orchestrator
 
@@ -39,35 +40,36 @@ def test_all_mocks_pipeline(measure_env):
     orchestrator = _make_orchestrator(measure_env)
     result = orchestrator.run()
 
-    assert len(result["outcome_reports"]) > 0
+    assert isinstance(result, PipelineResult)
+    assert len(result.outcome_reports) > 0
 
     # Verify determinism
     result2 = orchestrator.run()
-    assert result["pilot_results"] == result2["pilot_results"]
+    assert result.pilot_results == result2.pilot_results
 
 
 def test_contract_invariants(measure_env):
     orchestrator = _make_orchestrator(measure_env)
     result = orchestrator.run()
 
-    for pilot in result["pilot_results"]:
+    for pilot in result.pilot_results:
         assert pilot["ci_lower"] <= pilot["effect_estimate"] <= pilot["ci_upper"]
         assert 0.0 <= pilot["p_value"] <= 1.0
         assert pilot["sample_size"] >= 30
         assert isinstance(pilot["model_type"], ModelType)
 
-    for evalu in result["evaluate_results"]:
+    for evalu in result.evaluate_results:
         assert 0.0 <= evalu["confidence"] <= 1.0
 
-    alloc = result["allocate_result"]
+    alloc = result.allocate_result
     for iid in alloc["selected_initiatives"]:
         assert iid in alloc["predicted_returns"]
         assert iid in alloc["budget_allocated"]
 
-    for report in result["outcome_reports"]:
-        assert report["prediction_error"] == pytest.approx(report["actual_return"] - report["predicted_return"])
-        assert report["sample_size_scale"] >= report["sample_size_pilot"]
-        assert isinstance(report["model_type"], ModelType)
+    for report in result.outcome_reports:
+        assert report.prediction_error == pytest.approx(report.actual_return - report.predicted_return)
+        assert report.sample_size_scale >= report.sample_size_pilot
+        assert isinstance(report.model_type, ModelType)
 
 
 def test_empty_allocation(measure_env):
@@ -75,18 +77,18 @@ def test_empty_allocation(measure_env):
     orchestrator = _make_orchestrator(measure_env, budget=1)
     result = orchestrator.run()
 
-    assert result["allocate_result"]["selected_initiatives"] == []
-    assert result["scale_results"] == []
-    assert result["outcome_reports"] == []
+    assert result.allocate_result["selected_initiatives"] == []
+    assert result.scale_results == []
+    assert result.outcome_reports == []
 
 
 def test_single_initiative(measure_env):
     orchestrator = _make_orchestrator(measure_env, initiative_specs=[("only-one", 5000)])
     result = orchestrator.run()
 
-    assert len(result["pilot_results"]) == 1
-    assert len(result["outcome_reports"]) == 1
-    assert result["outcome_reports"][0]["initiative_id"] == "only-one"
+    assert len(result.pilot_results) == 1
+    assert len(result.outcome_reports) == 1
+    assert result.outcome_reports[0].initiative_id == "only-one"
 
 
 class _IncompleteMeasure:

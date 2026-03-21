@@ -6,12 +6,13 @@ import logging
 from pathlib import Path
 
 from impact_engine_orchestrator.config import load_config
+from impact_engine_orchestrator.contracts.pipeline import PipelineResult
 from impact_engine_orchestrator.orchestrator import Orchestrator
 
 logger = logging.getLogger(__name__)
 
 
-def run_pipeline(fname: str | Path) -> dict:
+def run_pipeline(fname: str | Path) -> PipelineResult:
     """Load a pipeline config file and execute the full pipeline.
 
     Parameters
@@ -21,14 +22,15 @@ def run_pipeline(fname: str | Path) -> dict:
 
     Returns
     -------
-    dict
-        Pipeline results with keys ``pilot_results``, ``evaluate_results``,
-        ``allocate_result``, ``scale_results``, and ``outcome_reports``.
+    PipelineResult
+        Typed pipeline result with ``outcome_reports`` as the primary
+        user-facing field, plus stage-level detail in ``pilot_results``,
+        ``evaluate_results``, ``allocate_result``, and ``scale_results``.
 
     Examples
     --------
     >>> result = run_pipeline("pipeline.yaml")
-    >>> print(result["outcome_reports"])
+    >>> print(result.outcome_reports)
     [...]
     """
     config = load_config(str(fname))

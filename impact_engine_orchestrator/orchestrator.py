@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict
 
 from impact_engine_orchestrator.components.base import PipelineComponentProtocol
+from impact_engine_orchestrator.contracts.pipeline import PipelineResult
 from impact_engine_orchestrator.contracts.report import OutcomeReport
 
 _MEASURE_REQUIRED_KEYS = frozenset(
@@ -70,7 +70,7 @@ class Orchestrator:
         allocate = registry.build(config["allocate_stage"])
         return cls(measure=measure, evaluate=evaluate, allocate=allocate, config=config)
 
-    def run(self) -> dict:
+    def run(self) -> PipelineResult:
         """Execute all pipeline stages and return combined results."""
         initiatives = self.config["initiatives"]
         cost_by_id = {i["initiative_id"]: i["cost_to_scale"] for i in initiatives}
@@ -128,13 +128,13 @@ class Orchestrator:
         # 5. Generate outcome reports
         reports = self._generate_reports(pilot_results, eval_results, alloc_result, scale_results)
 
-        return {
-            "pilot_results": pilot_results,
-            "evaluate_results": eval_results,
-            "allocate_result": alloc_result,
-            "scale_results": scale_results,
-            "outcome_reports": reports,
-        }
+        return PipelineResult(
+            outcome_reports=reports,
+            pilot_results=pilot_results,
+            evaluate_results=eval_results,
+            allocate_result=alloc_result,
+            scale_results=scale_results,
+        )
 
     def _allocate_kwargs(self) -> dict:
         """Extract allocate-specific kwargs from stage config."""
@@ -178,5 +178,5 @@ class Orchestrator:
                 confidence_score=evalu["confidence"],
                 model_type=pilot["model_type"],
             )
-            reports.append(asdict(report))
+            reports.append(report)
         return reports

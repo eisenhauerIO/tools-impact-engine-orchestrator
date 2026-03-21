@@ -10,19 +10,18 @@ This file documents conventions specific to the orchestrator component.
 | Page | Purpose |
 |------|---------|
 | `README.md` | Package positioning and quick start. Also the docs landing page. |
-| `guides/usage.md` | Three-step quickstart: write config → build orchestrator → call run(). |
-| `configuration/index.md` | Full parameter reference: top-level, allocate block, initiatives list. |
-| `pipeline/index.md` | Execution model: fan-out/fan-in, synchronisation points, stage contracts. |
+| `guides/usage.md` | Quickstart: write config → call `run_pipeline()` → read results. |
+| `configuration/index.md` | Full parameter reference: top-level keys, **ALLOCATE** block, **INITIATIVES** list. |
 | `api/index.md` | Auto-generated from source. Do not hand-edit. |
-| `impact-loop/tutorial.ipynb` | End-to-end pipeline run across multiple initiatives. |
+| `impact-loop/impact-loop.ipynb` | End-to-end pipeline run across multiple initiatives. |
 
 ---
 
 ## Sidebar structure
 
 ```
-Guides     → usage, configuration, pipeline, api
-Tutorials  → impact-loop/tutorial
+Guides     → usage, configuration, api
+Tutorials  → impact-loop/impact-loop
 ```
 
 ---
@@ -42,5 +41,6 @@ Bad:  Each initiative is MEASUREd... (verb form should be lowercase)
 
 ## Tutorials
 
-The impact-loop tutorial is executable — all components run from pip-installed packages,
-no external API keys required for the default `evaluate_strategy: score` path.
+The impact-loop tutorial is marked non-executable (`nbsphinx execute: never`) because it
+requires `setup_data.py` to be run first to generate simulated product catalogs. Notebooks
+are tested separately via `pytest --nbmake`.
