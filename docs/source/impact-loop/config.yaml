@@ -2,10 +2,10 @@ budget: 100000
 max_workers: 4
 storage_url: ./data/measure
 
-allocate:
+ALLOCATE:
   rule: minimax_regret
 
-initiatives:
+INITIATIVES:
   - initiative_id: product-desc-enhancement
     cost_to_scale: 15000
     measure_config: configs/product-desc-enhancement.yaml

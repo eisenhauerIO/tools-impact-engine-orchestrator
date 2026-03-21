@@ -73,3 +73,4 @@ One entry per stage, behavior from config:
 - Stage output validated via `_validate_stage_output()` with required key sets
 - Contract field names: `snake_case` (NEVER abbreviated: `return_best` not `R_best`)
 - `_external/` contains reference submodules — do not modify
+- Pipeline config YAML: `UPPER_CASE` for structural section keys (`ALLOCATE`, `INITIATIVES`), `snake_case` for leaf keys (`budget`, `rule`, `cost_to_scale`) — matches the measure config convention

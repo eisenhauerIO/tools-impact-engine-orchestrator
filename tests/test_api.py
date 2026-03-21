@@ -17,8 +17,8 @@ def test_run_pipeline_returns_expected_shape(measure_env, tmp_path):
                 "storage_url": storage_url,
                 "budget": 100000,
                 "max_workers": 1,
-                "allocate": {"rule": "minimax_regret"},
-                "initiatives": [
+                "ALLOCATE": {"rule": "minimax_regret"},
+                "INITIATIVES": [
                     {
                         "initiative_id": initiative.initiative_id,
                         "cost_to_scale": initiative.cost_to_scale,

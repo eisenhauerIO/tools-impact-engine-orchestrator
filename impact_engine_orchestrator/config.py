@@ -51,7 +51,7 @@ def load_config(path: str) -> dict[str, Any]:
     """Load pipeline configuration from a YAML file.
 
     The YAML must specify ``storage_url`` (where measure writes results) and an
-    ``allocate`` block with the decision rule.  Measure and Evaluate components
+    ``ALLOCATE`` block with the decision rule.  Measure and Evaluate components
     are always the canonical implementations; only Allocate parameters vary.
     """
     config_dir = Path(path).parent
@@ -61,11 +61,11 @@ def load_config(path: str) -> dict[str, Any]:
     storage_url = raw["storage_url"]
     measure_stage = StageConfig(component="Measure", kwargs={"storage_url": storage_url})
     evaluate_stage = StageConfig(component="Evaluate")
-    allocate_stage = StageConfig(component="Allocate", kwargs=dict(raw["allocate"]))
+    allocate_stage = StageConfig(component="Allocate", kwargs=dict(raw["ALLOCATE"]))
 
     # Resolve initiative measure_config paths relative to orchestrator YAML
     initiatives = []
-    for i in raw["initiatives"]:
+    for i in raw["INITIATIVES"]:
         ic = InitiativeConfig(**i)
         if ic.measure_config:
             ic.measure_config = str(config_dir / ic.measure_config)

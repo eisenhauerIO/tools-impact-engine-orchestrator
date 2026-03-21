@@ -8,10 +8,10 @@ The pipeline is driven by a single YAML file passed to `load_config()`.
 budget: 100000
 storage_url: ./data/measure
 
-allocate:
+ALLOCATE:
   rule: minimax_regret
 
-initiatives:
+INITIATIVES:
   - initiative_id: my-initiative
     cost_to_scale: 15000
     measure_config: configs/my-initiative.yaml
@@ -25,13 +25,13 @@ initiatives:
 | `max_workers` | int | 4 | Thread pool size for parallel fan-out stages |
 | `storage_url` | str | required | Directory where MEASURE writes job results |
 
-## `allocate` Block
+## `ALLOCATE` Block
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `rule` | str | required | Decision rule: `minimax_regret` or `bayesian` |
 
-## `initiatives` List
+## `INITIATIVES` List
 
 Each entry configures one initiative:
 

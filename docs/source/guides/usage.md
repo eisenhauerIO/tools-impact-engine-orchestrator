@@ -17,10 +17,10 @@ from a single config file.
 budget: 100000
 storage_url: ./data/measure
 
-allocate:
+ALLOCATE:
   rule: minimax_regret
 
-initiatives:
+INITIATIVES:
   - initiative_id: initiative-a
     cost_to_scale: 15000
     measure_config: configs/initiative-a.yaml
@@ -74,7 +74,7 @@ See the [API Reference](../api/index) for the full field list per stage.
 Each initiative can use a different confidence strategy:
 
 ```yaml
-initiatives:
+INITIATIVES:
   - initiative_id: initiative-a
     evaluate_strategy: score    # fast deterministic scoring (default)
     measure_config: configs/initiative-a.yaml

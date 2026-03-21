@@ -56,8 +56,8 @@ def test_from_config_round_trip(tmp_path):
             {
                 "budget": 100000,
                 "storage_url": "./data",
-                "allocate": {"rule": "minimax_regret"},
-                "initiatives": [
+                "ALLOCATE": {"rule": "minimax_regret"},
+                "INITIATIVES": [
                     {"initiative_id": "test-1", "cost_to_scale": 10000, "measure_config": "dummy.yaml"},
                 ],
             }
@@ -83,8 +83,8 @@ def test_from_config_with_real_components(tmp_path):
             {
                 "budget": 50000,
                 "storage_url": "./data",
-                "allocate": {"rule": "minimax_regret"},
-                "initiatives": [
+                "ALLOCATE": {"rule": "minimax_regret"},
+                "INITIATIVES": [
                     {"initiative_id": "test-1", "cost_to_scale": 10000, "measure_config": "dummy.yaml"},
                 ],
             }
