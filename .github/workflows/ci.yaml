@@ -36,4 +36,4 @@ jobs:
 
       - name: Run tutorial notebook
         working-directory: docs/source/impact-loop
-        run: hatch run pytest --nbmake tutorial.ipynb
+        run: hatch run pytest --nbmake impact-loop.ipynb
