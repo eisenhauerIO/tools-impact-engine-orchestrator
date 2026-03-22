@@ -29,7 +29,3 @@ jobs:
 
       - name: Run tests and notebooks
         run: hatch run test
-
-      - name: Run tutorial notebook
-        working-directory: docs/source/impact-loop
-        run: hatch run pytest --nbmake impact-loop.ipynb
