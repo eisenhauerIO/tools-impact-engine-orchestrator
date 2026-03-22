@@ -25,10 +25,9 @@ repos:
 
   - repo: local
     hooks:
-      - id: nbmake
-        name: nbmake (notebook execution)
-        entry: hatch run pytest --nbmake
+      - id: pytest
+        name: pytest
+        entry: hatch run test
         language: system
-        files: \.ipynb$
-        pass_filenames: true
-        types: [jupyter]
+        pass_filenames: false
+        always_run: true
