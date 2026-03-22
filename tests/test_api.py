@@ -15,9 +15,8 @@ def test_run_pipeline_returns_expected_shape(measure_env, tmp_path):
         yaml.dump(
             {
                 "storage_url": storage_url,
-                "budget": 100000,
                 "max_workers": 1,
-                "ALLOCATE": {"rule": "minimax_regret"},
+                "ALLOCATE": {"budget": 100000, "rule": "minimax_regret"},
                 "INITIATIVES": [
                     {
                         "initiative_id": initiative.initiative_id,

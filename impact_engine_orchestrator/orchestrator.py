@@ -100,7 +100,6 @@ class Orchestrator:
 
             # 3. ALLOCATE - reads impact_results.json + evaluate_result.json from disk
             allocate_config = {
-                "budget": self.config["budget"],
                 "costs": cost_by_id,
                 **self._allocate_kwargs(),
             }

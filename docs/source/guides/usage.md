@@ -14,10 +14,10 @@ from a single config file.
 
 ```yaml
 # pipeline.yaml
-budget: 100000
 storage_url: ./data/measure
 
 ALLOCATE:
+  budget: 100000
   rule: minimax_regret
 
 INITIATIVES:

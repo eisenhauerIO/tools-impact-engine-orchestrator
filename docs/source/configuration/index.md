@@ -5,10 +5,10 @@ The pipeline is driven by a single YAML file passed to `load_config()`.
 ## Minimal Example
 
 ```yaml
-budget: 100000
 storage_url: ./data/measure
 
 ALLOCATE:
+  budget: 100000
   rule: minimax_regret
 
 INITIATIVES:
@@ -21,7 +21,6 @@ INITIATIVES:
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `budget` | float | required | Total budget constraint for ALLOCATE |
 | `max_workers` | int | 4 | Thread pool size for parallel fan-out stages |
 | `storage_url` | str | required | Directory where MEASURE writes job results |
 
@@ -29,6 +28,7 @@ INITIATIVES:
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| `budget` | float | required | Total budget constraint for portfolio selection |
 | `rule` | str | required | Decision rule: `minimax_regret` or `bayesian` |
 
 ## `INITIATIVES` List

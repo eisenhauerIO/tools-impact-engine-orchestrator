@@ -54,9 +54,8 @@ def test_from_config_round_trip(tmp_path):
     orchestrator_cfg.write_text(
         yaml.dump(
             {
-                "budget": 100000,
                 "storage_url": "./data",
-                "ALLOCATE": {"rule": "minimax_regret"},
+                "ALLOCATE": {"budget": 100000, "rule": "minimax_regret"},
                 "INITIATIVES": [
                     {"initiative_id": "test-1", "cost_to_scale": 10000, "measure_config": "dummy.yaml"},
                 ],
@@ -81,9 +80,8 @@ def test_from_config_with_real_components(tmp_path):
     orchestrator_cfg.write_text(
         yaml.dump(
             {
-                "budget": 50000,
                 "storage_url": "./data",
-                "ALLOCATE": {"rule": "minimax_regret"},
+                "ALLOCATE": {"budget": 50000, "rule": "minimax_regret"},
                 "INITIATIVES": [
                     {"initiative_id": "test-1", "cost_to_scale": 10000, "measure_config": "dummy.yaml"},
                 ],

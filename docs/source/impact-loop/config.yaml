@@ -1,8 +1,8 @@
-budget: 100000
 max_workers: 4
 storage_url: ./data/measure
 
 ALLOCATE:
+  budget: 100000
   rule: minimax_regret
 
 INITIATIVES:

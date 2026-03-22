@@ -19,11 +19,11 @@ def _make_orchestrator(measure_env, budget=100000, initiative_specs=None, alloca
         ]
     if allocate_kwargs is None:
         allocate_kwargs = {"rule": "minimax_regret", "min_portfolio_worst_return": -1e9}
+    allocate_kwargs = {"budget": budget, **allocate_kwargs}
 
     initiatives = [make_initiative(iid, cost) for iid, cost in initiative_specs]
     config = dataclasses.asdict(
         PipelineConfig(
-            budget=budget,
             initiatives=initiatives,
             max_workers=1,
             measure_stage=StageConfig(component="Measure", kwargs={"storage_url": storage_url}),
