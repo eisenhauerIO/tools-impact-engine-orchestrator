@@ -53,7 +53,7 @@ build = "sphinx-build -b html docs/source docs/build/html"
 serve = ["sphinx-build -b html docs/source docs/build/html", "python -m http.server 8000 --directory docs/build/html"]
 
 [tool.ruff]
-extend-exclude = ["_external", "docs/build"]
+extend-exclude = ["_external", "docs/build", ".claude"]  # .claude: skill docs, not source
 line-length = 120
 
 [tool.ruff.lint]
