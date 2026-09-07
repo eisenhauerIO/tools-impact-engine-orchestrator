@@ -7,13 +7,14 @@ on:
     branches: [main]
   schedule:
     - cron: '0 6 * * *'  # Daily at 06:00 UTC
+  workflow_dispatch:  # manual runs — also lets CI be kicked after GitHub's inactivity auto-disable
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12"]  # 3.10 dropped 2026-09: EOL next month, and current litellm imports typing.NotRequired (3.11+)
 
     steps:
       - uses: actions/checkout@v4
