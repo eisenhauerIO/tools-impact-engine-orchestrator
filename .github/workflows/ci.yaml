@@ -7,6 +7,7 @@ on:
     branches: [main]
   schedule:
     - cron: '0 6 * * *'  # Daily at 06:00 UTC
+  workflow_dispatch:  # manual runs — also lets CI be kicked after GitHub's inactivity auto-disable
 
 jobs:
   test:
