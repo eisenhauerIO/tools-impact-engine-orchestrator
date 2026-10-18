@@ -53,7 +53,7 @@ Visit our [documentation](https://eisenhauerio.github.io/tools-impact-engine-{st
 ## Alignment with science.html
 
 Each component's README tagline and solution paragraph must be consistent with the
-corresponding `<h4>` software paragraph in `promotion/tools-impact-engine-website/science.html`. When updating
+corresponding `<h4>` software paragraph in `promotion/websites-impact-engine/science.html`. When updating
 either, check the other.
 
 | Stage | science.html Section | README Tagline Alignment |

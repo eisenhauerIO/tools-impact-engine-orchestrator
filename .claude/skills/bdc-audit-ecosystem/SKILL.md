@@ -12,7 +12,7 @@ Audit all impact-engine packages against the canonical patterns defined in the w
 
 Find all impact-engine package directories. Look for sibling repos relative to the current working directory:
 
-- If running from the workspace root (`workbench-impact-engine`), packages are under `components/`:
+- If running from the workspace root (`workbenches-impact-engine`), packages are under `components/`:
   - `components/tools-impact-engine-orchestrator`
   - `components/tools-impact-engine-measure`
   - `components/tools-impact-engine-evaluate`

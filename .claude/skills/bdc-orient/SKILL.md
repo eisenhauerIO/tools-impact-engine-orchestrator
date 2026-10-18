@@ -29,7 +29,7 @@ done
 ## Step 3: Open issues and PRs
 
 ```bash
-for repo in workbench-impact-engine tools-impact-engine-orchestrator tools-impact-engine-measure tools-impact-engine-evaluate tools-impact-engine-allocate; do
+for repo in workbenches-impact-engine tools-impact-engine-orchestrator tools-impact-engine-measure tools-impact-engine-evaluate tools-impact-engine-allocate; do
     echo "=== $repo ==="
     gh issue list --repo eisenhauerIO/$repo --state open --limit 5
     gh pr list --repo eisenhauerIO/$repo --state open --limit 5
