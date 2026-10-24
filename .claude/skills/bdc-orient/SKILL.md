@@ -1,25 +1,29 @@
 ---
 name: bdc-orient
 description: Orient to the ecosystem state after returning from a break — pull all repos, show recent activity, and surface open issues and PRs.
-allowed-tools: Bash(./setup.sh), Bash(git*), Bash(gh*)
+allowed-tools: Bash(git*), Bash(gh*)
 ---
 
 # Orient
 
 Get a snapshot of the ecosystem state. Run this when returning to the project after a break.
 
+The four repos are siblings: `../impact-engine-{orchestrator,measure,evaluate,allocate}` relative to the orchestrator.
+
 ## Step 1: Pull all repos
 
 ```bash
-./setup.sh
+for repo in ../impact-engine-orchestrator ../impact-engine-measure ../impact-engine-evaluate ../impact-engine-allocate; do
+    git -C "$repo" pull --ff-only
+done
 ```
 
 ## Step 2: Recent activity per repo
 
-For each component repo, show the last 5 commits and working tree status:
+For each repo, show the last 5 commits and working tree status:
 
 ```bash
-for repo in components/tools-impact-engine-orchestrator components/tools-impact-engine-measure components/tools-impact-engine-evaluate components/tools-impact-engine-allocate; do
+for repo in ../impact-engine-orchestrator ../impact-engine-measure ../impact-engine-evaluate ../impact-engine-allocate; do
     echo "=== $repo ==="
     git -C "$repo" log --oneline -5
     git -C "$repo" status --short
@@ -46,4 +50,4 @@ Summarize in plain text:
 
 ## Usage
 
-- `/bdc-orient` — run from the workspace root
+- `/bdc-orient` — run from the orchestrator repo root

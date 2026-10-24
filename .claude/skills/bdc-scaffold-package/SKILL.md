@@ -16,7 +16,7 @@ The user provides: `{package_name}`
 - `PACKAGE_NAME`: The stage name (e.g., `transform`, `validate`). This becomes:
   - Repo name: `tools-impact-engine-{PACKAGE_NAME}`
   - Python package: `impact_engine_{PACKAGE_NAME}`
-  - Directory: `components/tools-impact-engine-{PACKAGE_NAME}`
+  - Directory: `../impact-engine-{PACKAGE_NAME}` (sibling of the orchestrator repo)
 
 If no argument is provided, ask the user for the package name.
 
@@ -25,14 +25,14 @@ If no argument is provided, ask the user for the package name.
 Ask the user:
 
 1. **Role**: What does this pipeline stage do? (one sentence)
-2. **Input**: What dict keys does `execute()` expect?
-3. **Output**: What dict keys does `execute()` produce?
+2. **Facade**: Name and arguments of the public function (e.g., `measure_impact`, `evaluate_confidence`, `allocate_portfolio`)
+3. **Output**: What fields does `{PACKAGE_NAME}_result.json` carry?
 4. **Dependencies**: Any Python packages beyond the standard set?
 
 ## Step 2: Create directory structure
 
 ```
-components/tools-impact-engine-{PACKAGE_NAME}/
+../impact-engine-{PACKAGE_NAME}/
 ├── CLAUDE.md
 ├── pyproject.toml
 ├── .pre-commit-config.yaml
@@ -43,10 +43,10 @@ components/tools-impact-engine-{PACKAGE_NAME}/
 ├── README.md
 ├── impact_engine_{PACKAGE_NAME}/
 │   ├── __init__.py
-│   └── adapter.py
+│   └── api.py
 ├── tests/
 │   ├── conftest.py
-│   ├── test_adapter.py
+│   ├── test_api.py
 │   └── integration/
 │       └── test_{PACKAGE_NAME}_pipeline.py
 └── docs/
@@ -59,14 +59,14 @@ components/tools-impact-engine-{PACKAGE_NAME}/
 ### `pyproject.toml`
 
 Use hatchling as build backend. Include:
-- `[project]` with name, version, description, Python `>=3.10`
+- `[project]` with name, version, description, Python `>=3.10` (orchestrator is the exception at `>=3.11`)
 - `[tool.ruff]` with canonical config (line-length=120, select=["D","E","F","I"], numpy convention)
 - `[tool.hatch.envs.default]` with `test` and `lint` scripts
 - `[tool.pytest.ini_options]` with testpaths
 
 ### `.pre-commit-config.yaml`
 
-Include all canonical hooks: nbstripout, pre-commit-hooks (check-added-large-files, check-merge-conflict, check-yaml, end-of-file-fixer, trailing-whitespace), ruff (lint + format).
+Include all canonical hooks: nbstripout, pre-commit-hooks (check-added-large-files, check-merge-conflict, check-yaml, end-of-file-fixer, trailing-whitespace), ruff (lint + format), local `pytest` hook (`hatch run test`, `pass_filenames: false`, `always_run: true`).
 
 ### `.github/workflows/ci.yaml`
 
@@ -74,45 +74,41 @@ Standard CI: push/PR to main, Python 3.10/3.11/3.12 matrix, hatch run lint + tes
 
 ### `CLAUDE.md`
 
-Shared ecosystem section (from workspace CLAUDE.md) plus repo-specific section describing this package's role, input/output contract, and internal structure.
+Follow the bdc-engagement CLAUDE schema (Project overview, Development setup, Common commands, Architecture, Verification, Key conventions), describing this package's role, facade, result file, and internal structure.
 
-### `adapter.py`
+### `api.py`
 
-Minimal `PipelineComponent` Protocol implementation:
+Public facade that runs the stage and writes its result file to the job directory.
+The package knows nothing about the orchestrator; the orchestrator adapter lives in
+`impact_engine_orchestrator/components/{PACKAGE_NAME}/` (see the `component` feature type).
 
 ```python
-"""Adapter for {PACKAGE_NAME} pipeline stage."""
+"""Public API for the {PACKAGE_NAME} pipeline stage."""
 
+import json
 import logging
-from typing import Protocol
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-
-class PipelineComponent(Protocol):
-    """Pipeline component interface."""
-
-    def execute(self, event: dict) -> dict:
-        """Process event and return result."""
-        ...
+RESULT_FILENAME = "{PACKAGE_NAME}_result.json"
 
 
-class {PascalName}Adapter:
-    """Adapter for the {PACKAGE_NAME} pipeline stage."""
-
-    def execute(self, event: dict) -> dict:
-        """Process event and return result."""
-        # TODO: implement
-        return {}
+def {facade_name}(config: str | Path | dict, job_dir: str | Path) -> dict:
+    """Run the {PACKAGE_NAME} stage and write ``{PACKAGE_NAME}_result.json``."""
+    job_dir = Path(job_dir)
+    result: dict = {}  # TODO: implement
+    (job_dir / RESULT_FILENAME).write_text(json.dumps(result, indent=2))
+    return result
 ```
 
 ### `__init__.py`
 
-Export the adapter class.
+Export the facade (`from .api import {facade_name}`) in `__all__`.
 
-### `tests/test_adapter.py`
+### `tests/test_api.py`
 
-Basic test that `execute()` returns a dict.
+Basic test that the facade writes `{PACKAGE_NAME}_result.json` into a `tmp_path` job directory.
 
 ### `tests/integration/test_{PACKAGE_NAME}_pipeline.py`
 
@@ -125,7 +121,7 @@ Sphinx config with sphinx-rtd-theme, myst-parser, nbsphinx.
 ## Step 4: Initialize git repo
 
 ```bash
-cd components/tools-impact-engine-{PACKAGE_NAME}
+cd ../impact-engine-{PACKAGE_NAME}
 git init
 pre-commit install
 ```

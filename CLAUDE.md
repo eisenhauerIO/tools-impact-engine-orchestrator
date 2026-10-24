@@ -23,7 +23,8 @@ Always use `hatch run` to execute commands. Never bare `python` or `pytest`.
 
 ## Architecture
 
-- `impact_engine_orchestrator/orchestrator.py` — `Orchestrator` class: `run()`, `_fan_out()`, `_generate_reports()`, `_validate_stage_output()`
+- `impact_engine_orchestrator/api.py` — `run_pipeline()`: public entry point (config path → `PipelineResult`)
+- `impact_engine_orchestrator/orchestrator.py` — `Orchestrator` class: `run()`, `_fan_out()`, `_generate_reports()`; module-level `_validate_stage_output()`
 - `impact_engine_orchestrator/config.py` — `PipelineConfig`, `InitiativeConfig`, `StageConfig` dataclasses + `load_config()`
 - `impact_engine_orchestrator/registry.py` — component registry mapping short names to classes + `build()`
 - `impact_engine_orchestrator/components/base.py` — `PipelineComponent` ABC + `PipelineComponentProtocol`
@@ -31,33 +32,16 @@ Always use `hatch run` to execute commands. Never bare `python` or `pytest`.
 - `impact_engine_orchestrator/components/evaluate/evaluate.py` — EVALUATE adapter: calls `evaluate_confidence()`
 - `impact_engine_orchestrator/components/allocate/allocate.py` — ALLOCATE adapter: calls `allocate_portfolio()`, reads `allocate_result.json`
 - `impact_engine_orchestrator/components/allocate/mock.py` — `MockAllocate` for testing
-- `impact_engine_orchestrator/contracts/` — output dataclasses (`MeasureResult`, `OutcomeReport`, `ModelType` enum); evaluate and allocate contracts re-exported from their packages
+- `impact_engine_orchestrator/contracts/` — output dataclasses (`MeasureResult`, `OutcomeReport`, `PipelineResult` in `pipeline.py`, `ModelType` enum); evaluate and allocate contracts re-exported from their packages
 
-## Disk-based stage output pattern
+Stages hand off via disk: each writes `{stage}_result.json` to the job directory
+(`measure_result.json` → Orchestrator + Allocate; `evaluate_result.json` → Allocate;
+`allocate_result.json` → Orchestrator). Adapters are thin readers — call the
+facade, read the file; no field mapping in the orchestrator.
 
-Each pipeline stage writes its result to the job directory as a JSON file.
-Downstream stages read from disk rather than receiving in-memory data:
-
-| Stage | Writes | Read by |
-|-------|--------|---------|
-| MEASURE | `measure_result.json` | Orchestrator (for `MeasureResult`), Allocate (via `load_initiatives`) |
-| EVALUATE | `evaluate_result.json` | Allocate (via `load_initiatives`) |
-| ALLOCATE | `allocate_result.json` | Orchestrator (reads result back) |
-
-The orchestrator adapters are thin readers — they call the component's facade,
-then read the result file. No field mapping or model-specific parsing in the
-orchestrator.
-
-## Registry
-
-One entry per stage, behavior from config:
-
-| Entry | Class | Config controls |
-|-------|-------|----------------|
-| `Measure` | `Measure` | Model type via initiative measure config |
-| `Evaluate` | `Evaluate` | Strategy via manifest (`score` / `review`) |
-| `Allocate` | `Allocate` | Decision rule via `rule` field (`minimax_regret` / `bayesian`) |
-| `MockAllocate` | `MockAllocate` | Greedy heuristic for testing |
+Registry: one entry per stage, behavior from config — `Measure` (model type via
+initiative measure config), `Evaluate` (strategy via manifest: `score` / `review`),
+`Allocate` (`rule`: `minimax_regret` / `bayesian`), `MockAllocate` (greedy heuristic for testing).
 
 ## Verification
 
@@ -72,5 +56,4 @@ One entry per stage, behavior from config:
 - `PipelineComponent` protocol: `execute(self, event: dict) -> dict`
 - Stage output validated via `_validate_stage_output()` with required key sets
 - Contract field names: `snake_case` (NEVER abbreviated: `return_best` not `R_best`)
-- `_external/` contains reference submodules — do not modify
 - Pipeline config YAML: `UPPER_CASE` for structural section keys (`ALLOCATE`, `INITIATIVES`), `snake_case` for leaf keys (`budget`, `rule`, `cost_to_scale`) — matches the measure config convention

@@ -6,19 +6,16 @@ allowed-tools: Read, Grep, Glob, Bash(ls*), Bash(git*)
 
 # Audit Ecosystem
 
-Audit all impact-engine packages against the canonical patterns defined in the workspace `CLAUDE.md` and the strategy document (Section 3: Symmetric Repository Structure). Produce a markdown report of deviations — do NOT fix anything.
+Audit all impact-engine packages against the canonical patterns below. Produce a markdown report of deviations — do NOT fix anything.
 
 ## Step 0: Locate packages
 
-Find all impact-engine package directories. Look for sibling repos relative to the current working directory:
+The packages are sibling repos, relative to the orchestrator repo root:
 
-- If running from the workspace root (`workbenches-impact-engine`), packages are under `components/`:
-  - `components/tools-impact-engine-orchestrator`
-  - `components/tools-impact-engine-measure`
-  - `components/tools-impact-engine-evaluate`
-  - `components/tools-impact-engine-allocate`
-
-- If running from within a package, walk up to the workspace and find siblings.
+- `../impact-engine-orchestrator`
+- `../impact-engine-measure`
+- `../impact-engine-evaluate`
+- `../impact-engine-allocate`
 
 Confirm which packages exist. Report any that are missing.
 
@@ -31,7 +28,7 @@ For each package found, check the following aspects against canonical values. Re
 | Check | Canonical Value |
 |-------|----------------|
 | Build backend | `hatchling` |
-| Python requires | `>=3.10` |
+| Python requires | `>=3.10` (orchestrator: `>=3.11`) |
 | `[tool.ruff]` line-length | `120` |
 | `[tool.ruff.lint]` select | `["D", "E", "F", "I"]` |
 | `[tool.ruff.lint.pydocstyle]` convention | `"numpy"` |
@@ -48,13 +45,14 @@ Check for presence of these hooks:
 - `end-of-file-fixer`
 - `trailing-whitespace`
 - `ruff` (both lint and format)
+- `pytest` (local hook, `hatch run test`)
 
 ### 1.3 `.github/workflows/`
 
 | Check | Canonical Value |
 |-------|----------------|
 | CI file name | `ci.yaml` |
-| Python matrix | `["3.10", "3.11", "3.12"]` |
+| Python matrix | `["3.10", "3.11", "3.12"]` (orchestrator: `["3.11", "3.12"]`, 3.10 dropped 2026-09) |
 | Uses `hatch run` for test/lint | Yes |
 | Trigger includes push + PR to main | Yes |
 
@@ -63,19 +61,9 @@ Check for presence of these hooks:
 | Check | Canonical Value |
 |-------|----------------|
 | File exists | Yes |
-| Contains "Environment" section | Yes |
-| Contains "Architecture" section | Yes |
-| Contains "Key Conventions" section | Yes |
+| Conforms to bdc-engagement CLAUDE schema | Yes |
 
-### 1.5 `.claude/` directory
-
-| Check | Canonical Value |
-|-------|----------------|
-| `skills/` directory exists | Yes |
-| `subagents/` directory exists | Yes |
-| `settings.local.json` exists | Yes |
-
-### 1.6 Documentation
+### 1.5 Documentation
 
 | Check | Canonical Value |
 |-------|----------------|
@@ -84,16 +72,16 @@ Check for presence of these hooks:
 | Extensions include `myst-parser` | Yes |
 | Extensions include `nbsphinx` | Yes |
 
-### 1.7 Package structure
+### 1.6 Package structure
 
 | Check | Canonical Value |
 |-------|----------------|
-| `adapter.py` exists in package dir | Yes (except orchestrator) |
+| Public facade exported from `__init__.py` | `measure_impact`, `evaluate_confidence`, `allocate_portfolio` (not orchestrator) |
 | `tests/` directory at root | Yes |
 | `tests/integration/` subdirectory | Yes |
 | `__init__.py` exports main class | Yes |
 
-### 1.8 `README.md`
+### 1.7 `README.md`
 
 | Check | Canonical Value |
 |-------|----------------|
@@ -105,8 +93,6 @@ Check for presence of these hooks:
 | Ends with documentation link | `Visit our [documentation](...) for details.` |
 | No Quick Start section | Correct — instructional content lives in Sphinx docs |
 | No Development section | Correct — instructional content lives in Sphinx docs |
-
-Note: The orchestrator uses a design-document format and is excluded from this check.
 
 ## Step 2: Generate report
 

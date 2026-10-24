@@ -1,7 +1,7 @@
 # Canonical README Template — Impact Engine Components
 
-This template defines the standard README structure for impact-engine pipeline packages
-(measure, evaluate, allocate). The orchestrator is excluded — it uses a design-document format.
+This template defines the standard README structure for all four impact-engine packages
+(orchestrator, measure, evaluate, allocate).
 
 ## Template
 
@@ -9,7 +9,7 @@ This template defines the standard README structure for impact-engine pipeline p
 # Impact Engine — {Stage}
 
 [![CI](https://github.com/eisenhauerIO/tools-impact-engine-{stage}/actions/workflows/ci.yaml/badge.svg)](https://github.com/eisenhauerIO/tools-impact-engine-{stage}/actions/workflows/ci.yaml)
-[![Docs](https://github.com/eisenhauerIO/tools-impact-engine-{stage}/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/eisenhauerIO/tools-impact-engine-{stage}/actions/workflows/docs.yml)
+[![Docs](https://github.com/eisenhauerIO/tools-impact-engine-{stage}/actions/workflows/docs.yaml/badge.svg?branch=main)](https://github.com/eisenhauerIO/tools-impact-engine-{stage}/actions/workflows/docs.yaml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/eisenhauerIO/tools-impact-engine-{stage}/blob/main/LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Slack](https://img.shields.io/badge/Slack-Join%20Us-4A154B?logo=slack)](https://join.slack.com/t/eisenhauerioworkspace/shared_invite/zt-3lxtc370j-XLdokfTkno54wfhHVxvEfA)
@@ -27,7 +27,7 @@ Visit our [documentation](https://eisenhauerio.github.io/tools-impact-engine-{st
 
 ### Title
 - Format: `# Impact Engine — {Stage}` (em dash, not hyphen)
-- Stage name is title case: Measure, Evaluate, Allocate
+- Stage name is title case: Orchestrator, Measure, Evaluate, Allocate
 
 ### Badges
 - Exactly 5 badges, in this order: CI, Docs, License, Ruff, Slack
@@ -41,10 +41,7 @@ Visit our [documentation](https://eisenhauerio.github.io/tools-impact-engine-{st
 ### Opening Paragraphs
 - First paragraph: the problem (why this matters)
 - Second paragraph: the solution (what the package does)
-- **README is the source of truth for component messaging.** science.html derives from it:
-  - science.html science explanation ← README problem paragraph (adapted for business audience)
-  - science.html software paragraph ← README solution paragraph (adapted for mixed audience)
-- When you update the README paragraphs, update science.html to match
+- README is the source of truth for science.html — see `science-section.md`
 
 ### Documentation Link
 - Single line: `Visit our [documentation](https://eisenhauerio.github.io/tools-impact-engine-{stage}/) for details.`
@@ -53,8 +50,8 @@ Visit our [documentation](https://eisenhauerio.github.io/tools-impact-engine-{st
 ## Alignment with science.html
 
 Each component's README tagline and solution paragraph must be consistent with the
-corresponding `<h4>` software paragraph in `promotion/websites-impact-engine/science.html`. When updating
-either, check the other.
+corresponding `<h4>` software paragraph in `websites/impact-engine/site/science.html`
+(repo `eisenhauerIO/websites-impact-engine`); the derivation rule lives in `science-section.md`.
 
 | Stage | science.html Section | README Tagline Alignment |
 |-------|---------------------|--------------------------|

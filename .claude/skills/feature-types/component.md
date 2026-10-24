@@ -1,6 +1,11 @@
 # Feature Type: Component
 
-Instructions for scaffolding a new pipeline component in the impact-engine orchestrator.
+Instructions for scaffolding a new pipeline component (stage adapter) in the impact-engine orchestrator.
+
+Adapters live only here, in `impact_engine_orchestrator/components/{stage}/` — stage packages expose a
+public facade (`measure_impact`, `evaluate_confidence`, `allocate_portfolio`) that writes
+`{stage}_result.json` to the job directory. An adapter calls the facade and reads that file back;
+no field mapping or model-specific parsing in the orchestrator.
 
 ## Git
 
@@ -25,22 +30,23 @@ Ask the user these questions:
 3. **Input contract**: What dict keys does `execute()` expect?
 4. **Output contract**: What dict keys does `execute()` produce?
 5. **Dependencies**: Does it depend on output from other stages?
+6. **Facade**: Does it wrap a stage package facade? If so, which function and result file?
 
 ## References
 
 Ask the user which files to read for context. At minimum, read:
 
 - An existing component for pattern reference (e.g., `components/measure/`)
-- `impact_engine_orchestrator/components/base.py` (Protocol definition)
+- `impact_engine_orchestrator/components/base.py` (`PipelineComponent` ABC)
 - `impact_engine_orchestrator/registry.py` (registration pattern)
-- `impact_engine_orchestrator/pipeline.py` or equivalent (pipeline wiring)
+- `impact_engine_orchestrator/orchestrator.py` (pipeline wiring, `_validate_stage_output()` required keys)
 
 ## Plan
 
 The implementation plan should include:
 
 1. **Component directory** — `impact_engine_orchestrator/components/{COMPONENT_NAME}/`
-2. **Component class** — implements `PipelineComponent` Protocol
+2. **Component class** — subclasses `PipelineComponent`
 3. **Contract dataclass** — under `impact_engine_orchestrator/contracts/{COMPONENT_NAME}.py`
 4. **Registry entry** — register in `registry.py`
 5. **Tests** — unit + integration
@@ -64,10 +70,12 @@ The component class:
 
 import logging
 
+from impact_engine_orchestrator.components.base import PipelineComponent
+
 logger = logging.getLogger(__name__)
 
 
-class {CLASS_NAME}:
+class {CLASS_NAME}(PipelineComponent):
     """{Purpose description}."""
 
     def execute(self, event: dict) -> dict:
@@ -83,7 +91,7 @@ class {CLASS_NAME}:
         dict
             Result with keys: {output keys}.
         """
-        # Implementation
+        # Call the package facade, then read {stage}_result.json from the job directory
         return {...}
 ```
 
@@ -116,7 +124,8 @@ Add the new component to the registry:
 Before declaring done, verify:
 
 - [ ] Work is on a feature branch (not `main`)
-- [ ] Component satisfies `PipelineComponent` Protocol (has `execute(dict) -> dict`)
+- [ ] Component subclasses `PipelineComponent` (has `execute(dict) -> dict`)
+- [ ] Stage packages don't import each other; the adapter only calls the facade and reads its result file
 - [ ] Contract dataclass has `__post_init__` validation
 - [ ] Component registered in `registry.py`
 - [ ] All tests pass (`hatch run test`)

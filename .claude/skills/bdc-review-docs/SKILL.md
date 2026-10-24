@@ -8,11 +8,7 @@ allowed-tools: Read, Grep, Glob, Bash(ls*), Bash(hatch run docs*)
 
 Audit documentation against Impact Engine ecosystem conventions. Produce a report of findings — do NOT fix anything unless explicitly asked.
 
-This skill extends the general review-docs workflow with Impact Engine-specific formatting conventions. For generic checks (structure, rendered output, infrastructure), follow the general skill at:
-
-    .claude/.cache/utils-agentic-support/claude/skills/code/review/review-writing/SKILL.md
-
-Read that file at the start of the audit to load the generic workflow steps referenced below.
+This skill extends the `bdc-review-writing` skill with Impact Engine-specific conventions. Load `bdc-review-writing` at the start of the audit: its Part I covers generic formatting, and its Part II (Check Structure Compliance, Check Rendered Output, Check Infrastructure) supplies the steps referenced below.
 
 ## When to Use
 
@@ -26,20 +22,20 @@ Read that file at the start of the audit to load the generic workflow steps refe
 
 Load guidelines in this order:
 
-1. **Ecosystem-wide guidelines**: read `docs/GUIDELINES.md` at the workspace root
-   (two levels above the component repo: `../../docs/GUIDELINES.md` relative to the component root).
-   This file is the canonical source for formatting conventions, writing style, sidebar structure,
-   tutorial conventions, and Sphinx infrastructure requirements.
+1. **Ecosystem-wide guidelines**: read `workbenches/impact-engine/docs/GUIDELINES.md`
+   (repo `eisenhauerIO/workbenches-impact-engine`; `../../workbenches/impact-engine/docs/GUIDELINES.md`
+   relative to a package repo). This file is the canonical source for formatting conventions, writing
+   style, sidebar structure, tutorial conventions, and Sphinx infrastructure requirements.
 
-2. **Component-specific guidelines**: read `docs/source/GUIDELINES.md` in the current component repo.
-   This file references the ecosystem guidelines and adds component-specific page maps,
-   naming conventions, and tutorial execution rules.
+2. **Package-specific guidelines**: read `docs/source/GUIDELINES.md` in the package repo
+   (all four packages have one). It adds package-specific page maps, naming conventions,
+   and tutorial execution rules.
 
 If either file is missing, report it as the first finding.
 
 ### Step 2: Check Formatting Conventions
 
-Audit all documentation source files (`.md`, `.rst`, and markdown cells in `.ipynb` notebooks) against the conventions below. These apply across the entire Impact Engine ecosystem.
+Audit all documentation source files (`.md`, `.rst`, and markdown cells in `.ipynb` notebooks) against `bdc-review-writing` Part I plus the Impact Engine-specific conventions below.
 
 #### Product Name
 
@@ -71,35 +67,26 @@ Canonical library URLs:
 
 | Category | Format | Example |
 |----------|--------|---------|
-| Functions/methods | backticks with parens | `` `evaluate_impact()` `` |
-| Column/field names | backticks | `` `revenue` ``, `` `product_id` `` |
-| Config keys/values | backticks | `` `storage_url` `` |
-| File names (no link) | backticks | `` `engine.py` `` |
+| Stage facades | backticks with parens | `` `measure_impact()` ``, `` `evaluate_confidence()` ``, `` `allocate_portfolio()` `` |
 | Adapter/class names | backticks | `` `SubclassificationAdapter` `` |
-| Classes/interfaces (with source) | markdown link | `[MetricsManager](path)` |
-| Files (with source) | markdown link | `[engine.py](path)` |
 
 #### Statistical and Methodological Terms
 
 | Category | Format | Example |
 |----------|--------|---------|
 | Well-known acronyms | plain text, all caps | ATT, ATE, ATC, OLS, SARIMAX, ARIMA |
-| Design patterns | bold | **adapter pattern**, **data contracts** |
-| Key architectural concepts | bold | **plugin architecture** |
-| Tools/services | plain text | GitHub Actions, S3 |
-| File formats | plain text | YAML, JSON |
 
 ### Step 3: Check Structure Compliance
 
-Follow **Step 2 (Check Structure Compliance)** from the general skill.
+Follow **Check Structure Compliance** from `bdc-review-writing`.
 
 ### Step 4: Check Rendered Output
 
-Follow **Step 4 (Check Rendered Output)** from the general skill. Check the built HTML for broken links, anchor-only hrefs, missing formatting, and image/badge rendering.
+Follow **Check Rendered Output** from `bdc-review-writing`. Check the built HTML for broken links, anchor-only hrefs, missing formatting, and image/badge rendering.
 
 ### Step 5: Check Infrastructure
 
-Follow **Step 5 (Check Infrastructure)** from the general skill. Verify all items in the general skill's infrastructure table, including Matplotlib config and pre-commit hooks.
+Follow **Check Infrastructure** from `bdc-review-writing`. Verify all items in its infrastructure table, including Matplotlib config and pre-commit hooks.
 
 ### Step 6: Report
 

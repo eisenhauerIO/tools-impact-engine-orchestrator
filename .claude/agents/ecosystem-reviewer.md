@@ -2,7 +2,7 @@
 name: ecosystem-reviewer
 description: Review a change for cross-ecosystem consistency in the impact-engine pipeline.
 model: opus
-allowed-tools: Read, Grep, Glob, Bash(git diff*), Bash(git log*), Bash(git show*)
+tools: Read, Grep, Glob, Bash
 ---
 
 # Ecosystem Reviewer Agent
@@ -21,9 +21,9 @@ allocate  <- orchestrator
 
 - measure, evaluate, allocate have ZERO dependencies on each other
 - orchestrator depends on all three
-- The `execute()` boundary is `dict -> dict` — no cross-package type imports
+- The `execute()` boundary is `dict -> dict` — stage packages don't import each other; the orchestrator may re-export their result types (`contracts/evaluate.py`, `contracts/allocate.py`)
 - Each package owns its output types (dataclass + `__post_init__` validation)
-- `PipelineComponent` is a `typing.Protocol`, not an ABC
+- `components/base.py` defines `PipelineComponent(ABC)` plus a structural `PipelineComponentProtocol(Protocol)`
 
 ## Review Checklist
 
@@ -89,4 +89,4 @@ Tag each finding:
 
 ## Usage
 
-This agent is invoked by the system when reviewing changes that touch adapter.py, contracts, or cross-boundary types. It can also be invoked manually to review any change for ecosystem consistency.
+Invoke manually on changes to `components/`, `contracts/`, or a package's public API. Read-only by intent: use Bash only for `git diff`, `git log`, `git show`.

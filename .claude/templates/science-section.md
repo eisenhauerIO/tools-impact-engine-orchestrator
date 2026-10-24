@@ -1,7 +1,7 @@
 # Canonical science.html Section Template
 
 This template defines the standard structure for each component section within
-`promotion/website/science.html`. The science page has three sections, one per
+`websites/impact-engine/site/science.html` (repo `eisenhauerIO/websites-impact-engine`). The science page has three sections, one per
 pipeline stage (Measure, Evaluate, Allocate).
 
 ## Section Template
@@ -17,7 +17,7 @@ pipeline stage (Measure, Evaluate, Allocate).
 <h4>
     <span class="badges">
         <a href="https://github.com/eisenhauerIO/tools-impact-engine-{stage}/actions/workflows/ci.yaml" target="_blank"><img src="https://github.com/eisenhauerIO/tools-impact-engine-{stage}/actions/workflows/ci.yaml/badge.svg" alt="CI"></a>
-        <a href="https://github.com/eisenhauerIO/tools-impact-engine-{stage}/actions/workflows/docs.yml" target="_blank"><img src="https://github.com/eisenhauerIO/tools-impact-engine-{stage}/actions/workflows/docs.yml/badge.svg?branch=main" alt="Docs"></a>
+        <a href="https://github.com/eisenhauerIO/tools-impact-engine-{stage}/actions/workflows/docs.yaml" target="_blank"><img src="https://github.com/eisenhauerIO/tools-impact-engine-{stage}/actions/workflows/docs.yaml/badge.svg?branch=main" alt="Docs"></a>
     </span>
     Impact Engine — {Stage}
 </h4>
